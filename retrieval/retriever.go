@@ -77,7 +77,7 @@ func (r *retriever) Run() {
 				querier: querier,
 			}
 			ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(r.options.ScrapeTimeout))
-			data, err := g.generateGraphData(ctx, time.Now())
+			data, err := g.generateSnapshot(ctx, time.Now())
 			cancel()
 			if err != nil {
 				r.logger.Error("Failed to generate graph data", zap.Error(err))

@@ -23,7 +23,7 @@ type Options struct {
 
 type storage struct {
 	logger *zap.Logger
-	latest *model.GraphData
+	latest *model.Snapshot
 	mtx    sync.RWMutex
 }
 
@@ -33,9 +33,9 @@ func Open(path string, logger *zap.Logger, r prometheus.Registerer, opts *Option
 	}, nil
 }
 
-func (s *storage) Add(gd *model.GraphData) error {
+func (s *storage) Add(gd *model.Snapshot) error {
 	if gd == nil {
-		s.logger.Error("graphdata is nil")
+		s.logger.Error("Snapshot is nil")
 		return nil
 	}
 	s.logger.Info("Added a new graph data", zap.Time("time", gd.Time))
@@ -46,11 +46,11 @@ func (s *storage) Add(gd *model.GraphData) error {
 	return nil
 }
 
-func (s *storage) Get(t time.Time) (*model.GraphData, error) {
+func (s *storage) Get(t time.Time) (*model.Snapshot, error) {
 	return nil, nil
 }
 
-func (s *storage) GetLatest() (*model.GraphData, error) {
+func (s *storage) GetLatest() (*model.Snapshot, error) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 	if s.latest == nil {

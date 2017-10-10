@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type GraphData struct {
+type Snapshot struct {
 	Time time.Time
 	JSON []byte
 }

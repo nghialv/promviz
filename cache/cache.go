@@ -11,8 +11,8 @@ import (
 )
 
 type Cache interface {
-	Get(time.Time) *model.GraphData
-	Put(*model.GraphData) bool
+	Get(time.Time) *model.Snapshot
+	Put(*model.Snapshot) bool
 	Reset()
 }
 
@@ -38,18 +38,18 @@ func NewCache(logger *zap.Logger, r prometheus.Registerer, opts *Options) Cache 
 	return c
 }
 
-func (c *lru) Get(t time.Time) *model.GraphData {
+func (c *lru) Get(t time.Time) *model.Snapshot {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	if e, ok := c.items[t]; ok {
 		c.evictList.MoveToFront(e)
-		return e.Value.(*model.GraphData)
+		return e.Value.(*model.Snapshot)
 	}
 	return nil
 }
 
-func (c *lru) Put(gd *model.GraphData) bool {
+func (c *lru) Put(gd *model.Snapshot) bool {
 	if gd == nil {
 		return false
 	}
@@ -69,7 +69,7 @@ func (c *lru) Put(gd *model.GraphData) bool {
 		e := c.evictList.Back()
 		if e != nil {
 			c.evictList.Remove(e)
-			old := e.Value.(*model.GraphData)
+			old := e.Value.(*model.Snapshot)
 			delete(c.items, old.Time)
 		}
 	}

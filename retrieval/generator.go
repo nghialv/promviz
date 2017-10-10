@@ -21,7 +21,7 @@ type generator struct {
 	querier querier
 }
 
-func (g *generator) generateGraphData(ctx context.Context, ts time.Time) (*model.GraphData, error) {
+func (g *generator) generateSnapshot(ctx context.Context, ts time.Time) (*model.Snapshot, error) {
 	group, groupCtx := errgroup.WithContext(ctx)
 	var clusters *model.NodeConnectionSet
 	services := make(map[string]*model.NodeConnectionSet)
@@ -81,12 +81,12 @@ func (g *generator) generateGraphData(ctx context.Context, ts time.Time) (*model
 		return nil, err
 	}
 
-	graphData := &model.GraphData{
+	snapshot := &model.Snapshot{
 		Time: ts,
 		JSON: jsondata,
 	}
 
-	return graphData, nil
+	return snapshot, nil
 }
 
 func (g *generator) generateNodeConnectionSet(ctx context.Context, cfgConns []*config.Connection, cfgNotices []*config.NodeNotice, ts time.Time, nodeFactory func(string) *model.Node) (*model.NodeConnectionSet, error) {

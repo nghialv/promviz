@@ -15,10 +15,10 @@ type Storage interface {
 }
 
 type Appender interface {
-	Add(*model.GraphData) error
+	Add(*model.Snapshot) error
 }
 
 type Querier interface {
-	Get(time.Time) (*model.GraphData, error)
-	GetLatest() (*model.GraphData, error)
+	Get(time.Time) (*model.Snapshot, error)
+	GetLatest() (*model.Snapshot, error)
 }
