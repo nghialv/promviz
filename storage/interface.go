@@ -7,8 +7,6 @@ import (
 )
 
 type Storage interface {
-	// Querier(ctx context.Context) (Querier, error)
-	// Appender() (Appender, error)
 	Appender
 	Querier
 	Close() error
