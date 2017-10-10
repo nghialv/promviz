@@ -33,16 +33,22 @@ func Open(path string, logger *zap.Logger, r prometheus.Registerer, opts *Option
 	}, nil
 }
 
-func (s *storage) Add(gd *model.Snapshot) error {
-	if gd == nil {
+func (s *storage) Add(snapshot *model.Snapshot) error {
+	if snapshot == nil {
 		s.logger.Error("Snapshot is nil")
 		return nil
 	}
-	s.logger.Info("Added a new graph data", zap.Time("time", gd.Time))
 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
-	s.latest = gd
+
+	if s.latest != nil && s.latest.Time.After(snapshot.Time) {
+		s.logger.Info("Added a new snapshot but with wrong order", zap.Time("new", snapshot.Time), zap.Time("latestTime", snapshot.Time))
+		return nil
+	}
+
+	s.logger.Info("Added a new snapshot", zap.Time("time", snapshot.Time))
+	s.latest = snapshot
 	return nil
 }
 

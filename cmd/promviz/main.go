@@ -57,7 +57,7 @@ func main() {
 		Default(":9091").StringVar(&cfg.api.ListenAddress)
 
 	a.Flag("retrieval.scrape-interval", "").
-		Default("10s").DurationVar(&cfg.retrieval.ScrapeInterval)
+		Default("15s").DurationVar(&cfg.retrieval.ScrapeInterval)
 
 	a.Flag("retrieval.scrape-timeout", "").
 		Default("10s").DurationVar(&cfg.retrieval.ScrapeTimeout)
