@@ -17,6 +17,7 @@ type Appender interface {
 }
 
 type Querier interface {
-	Get(time.Time) (*model.Snapshot, error)
+	Get(string) (*model.Snapshot, error)
 	GetLatest() (*model.Snapshot, error)
+	GetKey(time.Time) string
 }
