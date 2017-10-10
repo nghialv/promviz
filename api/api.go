@@ -158,5 +158,5 @@ func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(snapshot.JSON)
+	w.Write(snapshot.GraphJSON)
 }

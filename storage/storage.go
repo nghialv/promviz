@@ -46,16 +46,16 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	if s.latest != nil && s.latest.Time.After(snapshot.Time) {
-		s.logger.Info("Added a new snapshot but with wrong order", zap.Time("new", snapshot.Time), zap.Time("latestTime", snapshot.Time))
+	if s.latest != nil && s.latest.Timestamp.After(snapshot.Timestamp) {
+		s.logger.Info("Added a new snapshot but with wrong order", zap.Time("new", snapshot.Timestamp), zap.Time("latestTime", snapshot.Timestamp))
 		return nil
 	}
 
-	s.logger.Info("Added a new snapshot", zap.Time("time", snapshot.Time))
+	s.logger.Info("Added a new snapshot", zap.Time("time", snapshot.Timestamp))
 	s.latest = snapshot
 
-	path := fmt.Sprintf("%s/%s.json", "/Users/a13705/Downloads/db", s.GetKey(snapshot.Time))
-	err := ioutil.WriteFile(path, snapshot.JSON, 0644)
+	path := fmt.Sprintf("%s/%s.json", "/Users/a13705/Downloads/db", s.GetKey(snapshot.Timestamp))
+	err := ioutil.WriteFile(path, snapshot.GraphJSON, 0644)
 	if err != nil {
 		s.logger.Error("Failed to write snapshot to disk", zap.Error(err))
 		return err
@@ -70,7 +70,7 @@ func (s *storage) Get(key string) (*model.Snapshot, error) {
 		return nil, err
 	}
 	return &model.Snapshot{
-		JSON: data,
+		GraphJSON: data,
 	}, nil
 }
 
