@@ -161,6 +161,11 @@ func main() {
 	go func() {
 		mux := http.NewServeMux()
 		mux.Handle(cfg.metricPath, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+
+		logger.Info("Starting metric server...",
+			zap.String("address", cfg.metricAddress),
+			zap.String("path", cfg.metricPath))
+
 		if err := http.ListenAndServe(cfg.metricAddress, mux); err != nil {
 			errCh <- err
 		}
