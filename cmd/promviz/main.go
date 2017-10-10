@@ -20,6 +20,14 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+var (
+	configSuccess = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "promviz",
+		Name:      "config_last_reload_successful",
+		Help:      "Whether the last configuration reload attempt was successful.",
+	})
+)
+
 func main() {
 	cfg := struct {
 		configFile    string
@@ -82,7 +90,9 @@ func main() {
 	defer logger.Sync()
 
 	registry := prometheus.NewRegistry()
-	registry.MustRegister(prometheus.NewGoCollector())
+	registry.MustRegister(
+		prometheus.NewGoCollector(),
+		configSuccess)
 
 	storageReady := make(chan struct{})
 	var db storage.Storage
@@ -163,7 +173,7 @@ func main() {
 	case <-sigCh:
 		logger.Warn("Received SIGTERM, exiting gracefully...")
 	case err := <-errCh:
-		logger.Error("Failed to start web server, exiting gracefully", zap.Error(err))
+		logger.Error("Got an error from errCh, exiting gracefully", zap.Error(err))
 	}
 }
 
@@ -171,8 +181,16 @@ type Reloadable interface {
 	ApplyConfig(*config.Config) error
 }
 
-func reloadConfig(path string, logger *zap.Logger, rl Reloadable) error {
+func reloadConfig(path string, logger *zap.Logger, rl Reloadable) (err error) {
 	logger.Info("Loading configuration file", zap.String("filepath", path))
+
+	defer func() {
+		if err != nil {
+			configSuccess.Set(0)
+		} else {
+			configSuccess.Set(1)
+		}
+	}()
 
 	cfg, err := config.LoadFile(path)
 	if err != nil {
