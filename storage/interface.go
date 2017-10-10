@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"time"
-
 	"github.com/nghialv/promviz/model"
 )
 
@@ -17,7 +15,6 @@ type Appender interface {
 }
 
 type Querier interface {
-	Get(string) (*model.Snapshot, error)
-	GetLatest() (*model.Snapshot, error)
-	GetKey(time.Time) string
+	GetChunk(int64) (*model.Chunk, error)
+	GetLatestSnapshot() (*model.Snapshot, error)
 }

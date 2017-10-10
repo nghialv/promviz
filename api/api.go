@@ -120,7 +120,7 @@ func (h *handler) reloadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
-	getSnapshot := h.querier.GetLatest
+	getSnapshot := h.querier.GetLatestSnapshot
 	query := req.URL.Query()
 	offsets := query["offset"]
 
@@ -131,23 +131,31 @@ func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		ts := time.Now().Add(time.Duration(-offset) * time.Second)
-		key := h.querier.GetKey(ts)
+		if offset > 0 {
+			ts := time.Now().Add(time.Duration(-offset) * time.Second)
+			chunkID := model.ChunkID(time.Second*30, ts)
 
-		getSnapshot = func() (*model.Snapshot, error) {
-			if c := h.cache.Get(key); c != nil {
-				return c, nil
+			getSnapshot = func() (*model.Snapshot, error) {
+				chunk := h.cache.Get(chunkID)
+				if chunk == nil {
+					h.logger.Warn("Cache miss",
+						zap.Time("ts", ts),
+						zap.Int64("chunkID", chunkID))
+
+					chunk, err = h.querier.GetChunk(chunkID)
+					if err != nil {
+						return nil, err
+					}
+					if chunk.Completed {
+						h.cache.Put(chunkID, chunk)
+					}
+				}
+				snapshot := chunk.GetNearestSnapshot(ts)
+				if snapshot == nil {
+					return nil, fmt.Errorf("Not found snapshot")
+				}
+				return snapshot, err
 			}
-
-			h.logger.Warn("Cache miss",
-				zap.Time("ts", ts),
-				zap.String("key", key))
-
-			snapshot, err := h.querier.Get(key)
-			if err == nil {
-				h.cache.Put(key, snapshot)
-			}
-			return snapshot, err
 		}
 	}
 
@@ -158,5 +166,5 @@ func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(snapshot.GraphJSON)
+	w.Write([]byte(snapshot.GraphJSON))
 }

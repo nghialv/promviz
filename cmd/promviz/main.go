@@ -76,6 +76,9 @@ func main() {
 	a.Flag("storage.retention", "How long to retain graph data in the storage.").
 		Default("24h").DurationVar(&cfg.storage.Retention)
 
+	a.Flag("storage.chunk-length", "The length time of a chunk.").
+		Default("30s").DurationVar(&cfg.storage.ChunkLength)
+
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
 		fmt.Printf("Failed to parse arguments: %v\n", err)

@@ -83,7 +83,7 @@ func (g *generator) generateSnapshot(ctx context.Context, ts time.Time) (*model.
 
 	snapshot := &model.Snapshot{
 		Timestamp: ts,
-		GraphJSON: jsondata,
+		GraphJSON: string(jsondata),
 	}
 
 	return snapshot, nil

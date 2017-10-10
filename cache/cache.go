@@ -16,8 +16,8 @@ var (
 )
 
 type Cache interface {
-	Get(string) *model.Snapshot
-	Put(string, *model.Snapshot) bool
+	Get(int64) *model.Chunk
+	Put(int64, *model.Chunk) bool
 	Reset()
 }
 
@@ -26,9 +26,9 @@ type Options struct {
 }
 
 type cacheMetrics struct {
-	get  *prometheus.CounterVec
-	put  *prometheus.CounterVec
-	size prometheus.Gauge
+	get    *prometheus.CounterVec
+	put    *prometheus.CounterVec
+	length prometheus.Gauge
 }
 
 func newCacheMetrics(r prometheus.Registerer) *cacheMetrics {
@@ -49,18 +49,18 @@ func newCacheMetrics(r prometheus.Registerer) *cacheMetrics {
 		},
 			[]string{"status"},
 		),
-		size: prometheus.NewGauge(prometheus.GaugeOpts{
+		length: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "size",
-			Help:      "Current size of cache.",
+			Name:      "length",
+			Help:      "Current length of cache.",
 		}),
 	}
 	if r != nil {
 		r.MustRegister(
 			m.get,
 			m.put,
-			m.size,
+			m.length,
 		)
 	}
 	return m
@@ -74,12 +74,12 @@ type cache struct {
 	mtx     sync.Mutex
 
 	linkedList *list.List
-	items      map[string]*list.Element
+	items      map[int64]*list.Element
 }
 
 type item struct {
-	key   string
-	value *model.Snapshot
+	key   int64
+	value *model.Chunk
 }
 
 func NewCache(logger *zap.Logger, r prometheus.Registerer, opts *Options) Cache {
@@ -92,9 +92,9 @@ func NewCache(logger *zap.Logger, r prometheus.Registerer, opts *Options) Cache 
 	return c
 }
 
-func (c *cache) Get(key string) (snapshot *model.Snapshot) {
+func (c *cache) Get(chunkID int64) (chunk *model.Chunk) {
 	defer func() {
-		if snapshot == nil {
+		if chunk == nil {
 			c.metrics.get.WithLabelValues("miss").Inc()
 		} else {
 			c.metrics.get.WithLabelValues("hit").Inc()
@@ -104,38 +104,38 @@ func (c *cache) Get(key string) (snapshot *model.Snapshot) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if e, ok := c.items[key]; ok {
+	if e, ok := c.items[chunkID]; ok {
 		c.linkedList.MoveToFront(e)
-		snapshot = e.Value.(item).value
+		chunk = e.Value.(item).value
 		return
 	}
 	return
 }
 
-func (c *cache) Put(key string, snapshot *model.Snapshot) (ok bool) {
-	if snapshot == nil {
+func (c *cache) Put(chunkID int64, chunk *model.Chunk) (ok bool) {
+	if chunk == nil {
 		return false
 	}
-	size := 0
+	length := 0
 
 	defer func() {
 		c.metrics.put.WithLabelValues(strconv.FormatBool(ok)).Inc()
-		c.metrics.size.Set(float64(size))
+		c.metrics.length.Set(float64(length))
 	}()
 
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if e, ok := c.items[key]; ok {
+	if e, ok := c.items[chunkID]; ok {
 		c.linkedList.MoveToFront(e)
 		return true
 	}
 
 	element := c.linkedList.PushFront(item{
-		key:   key,
-		value: snapshot,
+		key:   chunkID,
+		value: chunk,
 	})
-	c.items[key] = element
+	c.items[chunkID] = element
 
 	evict := c.linkedList.Len() > c.options.Size
 	if evict {
@@ -146,7 +146,7 @@ func (c *cache) Put(key string, snapshot *model.Snapshot) (ok bool) {
 			delete(c.items, k)
 		}
 	}
-	size = len(c.items)
+	length = len(c.items)
 	return true
 }
 
@@ -154,7 +154,7 @@ func (c *cache) Reset() {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	c.items = make(map[string]*list.Element)
+	c.items = make(map[int64]*list.Element)
 	c.linkedList = list.New()
-	c.metrics.size.Set(0)
+	c.metrics.length.Set(0)
 }

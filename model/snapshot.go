@@ -6,5 +6,5 @@ import (
 
 type Snapshot struct {
 	Timestamp time.Time `json:"timestamp"`
-	GraphJSON []byte    `json:"graphJSON"`
+	GraphJSON string    `json:"graphJSON"`
 }
