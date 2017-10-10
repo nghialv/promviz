@@ -66,19 +66,24 @@ func newCacheMetrics(r prometheus.Registerer) *cacheMetrics {
 	return m
 }
 
-type lru struct {
+type cache struct {
 	logger  *zap.Logger
 	metrics *cacheMetrics
 
 	options *Options
 	mtx     sync.Mutex
 
-	evictList *list.List
-	items     map[string]*list.Element
+	linkedList *list.List
+	items      map[string]*list.Element
+}
+
+type item struct {
+	key   string
+	value *model.Snapshot
 }
 
 func NewCache(logger *zap.Logger, r prometheus.Registerer, opts *Options) Cache {
-	c := &lru{
+	c := &cache{
 		logger:  logger,
 		metrics: newCacheMetrics(r),
 		options: opts,
@@ -87,7 +92,7 @@ func NewCache(logger *zap.Logger, r prometheus.Registerer, opts *Options) Cache 
 	return c
 }
 
-func (c *lru) Get(key string) (snapshot *model.Snapshot) {
+func (c *cache) Get(key string) (snapshot *model.Snapshot) {
 	defer func() {
 		if snapshot == nil {
 			c.metrics.get.WithLabelValues("miss").Inc()
@@ -100,14 +105,14 @@ func (c *lru) Get(key string) (snapshot *model.Snapshot) {
 	defer c.mtx.Unlock()
 
 	if e, ok := c.items[key]; ok {
-		c.evictList.MoveToFront(e)
-		snapshot = e.Value.(*model.Snapshot)
+		c.linkedList.MoveToFront(e)
+		snapshot = e.Value.(item).value
 		return
 	}
 	return
 }
 
-func (c *lru) Put(key string, snapshot *model.Snapshot) (ok bool) {
+func (c *cache) Put(key string, snapshot *model.Snapshot) (ok bool) {
 	if snapshot == nil {
 		return false
 	}
@@ -122,31 +127,34 @@ func (c *lru) Put(key string, snapshot *model.Snapshot) (ok bool) {
 	defer c.mtx.Unlock()
 
 	if e, ok := c.items[key]; ok {
-		c.evictList.MoveToFront(e)
-		return false
+		c.linkedList.MoveToFront(e)
+		return true
 	}
 
-	element := c.evictList.PushFront(snapshot)
+	element := c.linkedList.PushFront(item{
+		key:   key,
+		value: snapshot,
+	})
 	c.items[key] = element
 
-	evict := c.evictList.Len() > c.options.Size
-	// if evict {
-	// 	e := c.evictList.Back()
-	// 	if e != nil {
-	// 		c.evictList.Remove(e)
-	// 		old := e.Value.(*model.Snapshot)
-	// 		delete(c.items, old.Time)
-	// 	}
-	// }
+	evict := c.linkedList.Len() > c.options.Size
+	if evict {
+		e := c.linkedList.Back()
+		if e != nil {
+			c.linkedList.Remove(e)
+			k := e.Value.(item).key
+			delete(c.items, k)
+		}
+	}
 	size = len(c.items)
-	return evict
+	return true
 }
 
-func (c *lru) Reset() {
+func (c *cache) Reset() {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	c.items = make(map[string]*list.Element)
-	c.evictList = list.New()
+	c.linkedList = list.New()
 	c.metrics.size.Set(0)
 }
