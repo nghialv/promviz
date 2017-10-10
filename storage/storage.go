@@ -64,7 +64,14 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 }
 
 func (s *storage) Get(key string) (*model.Snapshot, error) {
-	return nil, nil
+	path := fmt.Sprintf("%s/%s.json", "/Users/a13705/Downloads/db", key)
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Snapshot{
+		JSON: data,
+	}, nil
 }
 
 func (s *storage) GetLatest() (*model.Snapshot, error) {

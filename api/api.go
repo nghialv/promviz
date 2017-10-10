@@ -3,9 +3,12 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/nghialv/promviz/cache"
 	"github.com/nghialv/promviz/config"
+	"github.com/nghialv/promviz/model"
 	"github.com/nghialv/promviz/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/cors"
@@ -66,14 +69,41 @@ func (h *handler) register(mux *http.ServeMux) {
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		id++
 		h.logger.Info(fmt.Sprintf("%5d - New request", id))
-		gd, err := h.querier.GetLatest()
+
+		query := req.URL.Query()
+		offsets := query["offset"]
+		var getSnapshot func() (*model.Snapshot, error)
+
+		if len(offsets) == 0 {
+			getSnapshot = h.querier.GetLatest
+		} else {
+			offset, err := strconv.Atoi(offsets[0])
+			if err != nil {
+				w.WriteHeader(400)
+				return
+			}
+			key := h.querier.GetKey(time.Now().Add(time.Duration(-offset) * time.Second))
+			getSnapshot = func() (*model.Snapshot, error) {
+				if c := h.cache.Get(key); c != nil {
+					return c, nil
+				}
+				h.logger.Warn("Cache miss")
+				snapshot, err := h.querier.Get(key)
+				if err == nil {
+					h.cache.Put(key, snapshot)
+				}
+				return snapshot, err
+			}
+		}
+
+		snapshot, err := getSnapshot()
 		if err != nil {
 			w.WriteHeader(401)
 			return
 		}
 		h.logger.Info(fmt.Sprintf("%5d - Handled", id))
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(gd.JSON)
+		w.Write(snapshot.JSON)
 	})
 }
 

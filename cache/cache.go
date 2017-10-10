@@ -3,7 +3,6 @@ package cache
 import (
 	"container/list"
 	"sync"
-	"time"
 
 	"github.com/nghialv/promviz/model"
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,8 +10,8 @@ import (
 )
 
 type Cache interface {
-	Get(time.Time) *model.Snapshot
-	Put(*model.Snapshot) bool
+	Get(string) *model.Snapshot
+	Put(string, *model.Snapshot) bool
 	Reset()
 }
 
@@ -26,7 +25,7 @@ type lru struct {
 	mtx     sync.Mutex
 
 	evictList *list.List
-	items     map[time.Time]*list.Element
+	items     map[string]*list.Element
 }
 
 func NewCache(logger *zap.Logger, r prometheus.Registerer, opts *Options) Cache {
@@ -38,41 +37,41 @@ func NewCache(logger *zap.Logger, r prometheus.Registerer, opts *Options) Cache 
 	return c
 }
 
-func (c *lru) Get(t time.Time) *model.Snapshot {
+func (c *lru) Get(key string) *model.Snapshot {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if e, ok := c.items[t]; ok {
+	if e, ok := c.items[key]; ok {
 		c.evictList.MoveToFront(e)
 		return e.Value.(*model.Snapshot)
 	}
 	return nil
 }
 
-func (c *lru) Put(gd *model.Snapshot) bool {
-	if gd == nil {
+func (c *lru) Put(key string, snapshot *model.Snapshot) bool {
+	if snapshot == nil {
 		return false
 	}
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if e, ok := c.items[gd.Time]; ok {
+	if e, ok := c.items[key]; ok {
 		c.evictList.MoveToFront(e)
 		return false
 	}
 
-	element := c.evictList.PushFront(gd)
-	c.items[gd.Time] = element
+	element := c.evictList.PushFront(snapshot)
+	c.items[key] = element
 
 	evict := c.evictList.Len() > c.options.Size
-	if evict {
-		e := c.evictList.Back()
-		if e != nil {
-			c.evictList.Remove(e)
-			old := e.Value.(*model.Snapshot)
-			delete(c.items, old.Time)
-		}
-	}
+	// if evict {
+	// 	e := c.evictList.Back()
+	// 	if e != nil {
+	// 		c.evictList.Remove(e)
+	// 		old := e.Value.(*model.Snapshot)
+	// 		delete(c.items, old.Time)
+	// 	}
+	// }
 	return evict
 }
 
@@ -80,6 +79,6 @@ func (c *lru) Reset() {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	c.items = make(map[time.Time]*list.Element)
+	c.items = make(map[string]*list.Element)
 	c.evictList = list.New()
 }
