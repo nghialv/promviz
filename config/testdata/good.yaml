@@ -68,16 +68,26 @@ clusterConnections:
     status:
       label: status
       dangerRegex: ^5..$
-  # - name: internet-abema-transcoder
-  #   source:
-  #     replacement: INTERNET
-  #   target:
-  #     replacement: abema-transcoder
-  # - name: internet-to-bucketeer
-  #   source:
-  #     replacement: INTERNET
-  #   target:
-  #     replacement: bucketeer
+  - name: internet-to-abema-transcoder
+    query: sum by (status) (status:http_microservice_requests_total:rate2m)
+    prometheusURL: http://10.8.6.170:9090
+    source:
+      replacement: INTERNET
+    target:
+      replacement: abema-transcoder
+    status:
+      label: status
+      dangerRegex: ^5..$
+  - name: internet-to-bucketeer
+    query: sum by (status) (status:http_microservice_requests_total:rate2m)
+    prometheusURL: http://10.8.6.170:9090
+    source:
+      replacement: INTERNET
+    target:
+      replacement: bucketeer
+    status:
+      label: status
+      dangerRegex: ^5..$
 
 classes:
   - name: http
