@@ -18,7 +18,7 @@ clusters:
         notices:
           - name: highErrorRate
             statusType: danger
-            threshol: 0.01
+            threshold: 0.01
             title: HighErrorRate
       - name: grpc
         query: client_code:grpc_server_requests_total:rate2m{client_host_service!=""}
