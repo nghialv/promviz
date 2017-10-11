@@ -1,15 +1,15 @@
-graphName: AbemaTV
+graphName: Demo
 clusters:
-  - name: abema-prd
+  - name: demo-cluster-1
     serviceConnections:
       - name: http
-        query: status:http_microservice_requests_total:rate2m
-        prometheusURL: http://10.8.6.170:9090
+        query: status:http_requests_total:rate2m
+        prometheusURL: http://localhost:9090
         source:
           replacement: INTERNET
         target:
           label: service
-          regex: ^abema-(?:(.*)-exporter|(.*))$
+          regex: ^demo-(?:(.*)-exporter|(.*))$
           replacement: $1$2
           class: http
         status:
@@ -21,13 +21,13 @@ clusters:
             threshold: 0.01
             title: HighErrorRate
       - name: grpc
-        query: client_code:grpc_server_requests_total:rate2m{client_host_service!=""}
-        prometheusURL: http://10.8.7.37:9090
+        query: client_code:grpc_server_requests_total:rate2m{client!=""}
+        prometheusURL: http://localhost:9090
         source:
-          label: client_host_service
+          label: client
         target:
           label: service
-          regex: ^abema-(.+)$
+          regex: ^demo-(.+)$
           replacement: $1
           class: grpc
         status:
@@ -35,11 +35,11 @@ clusters:
           dangerRegex: Internal
           warningRegex: Unavailable|DataLoss
       - name: redis
-        query: status:abema_redis_client_cmds_total:rate2m
-        prometheusURL: http://10.8.10.134:9090
+        query: status:redis_client_cmds_total:rate2m
+        prometheusURL: http://localhost:9090
         source:
           label: service
-          regex: ^abema-(?:(ccu-exporter)|(?:(.*)-exporter|(.*)))$
+          regex: ^demo-(?:(ccu-exporter)|(?:(.*)-exporter|(.*)))$
           replacement: $1$2$3
         target:
           label: client
@@ -51,40 +51,40 @@ clusters:
       - name: RedisHighErrorRate
         title: High error rate
         severity: 1
-        link: http://10.8.10.134:9090
-        query: sum by (client)(status:abema_redis_client_cmds_total:rate2m{status="redis_nil"}) > 0
-        prometheusURL: http://10.8.10.134:9090
+        link: http://localhost:9090
+        query: sum by (client)(status:redis_client_cmds_total:rate2m{status="redis_nil"}) > 0
+        prometheusURL: http://localhost:9090
         node:
           label: client
 
 clusterConnections:
-  - name: internet-to-abema-prd
-    query: sum by (status) (status:http_microservice_requests_total:rate2m)
-    prometheusURL: http://10.8.6.170:9090
+  - name: internet-to-demo-cluster-1
+    query: sum by (status) (status:http_requests_total:rate2m)
+    prometheusURL: http://localhost:9090
     source:
       replacement: INTERNET
     target:
-      replacement: abema-prd
+      replacement: demo-cluster-1
     status:
       label: status
       dangerRegex: ^5..$
-  - name: internet-to-abema-transcoder
-    query: sum by (status) (status:http_microservice_requests_total:rate2m)
-    prometheusURL: http://10.8.6.170:9090
+  - name: internet-to-demo-cluster-2
+    query: sum by (status) (status:http_requests_total:rate2m)
+    prometheusURL: http://localhost:9090
     source:
       replacement: INTERNET
     target:
-      replacement: abema-transcoder
+      replacement: demo-cluster-2
     status:
       label: status
       dangerRegex: ^5..$
-  - name: internet-to-bucketeer
-    query: sum by (status) (status:http_microservice_requests_total:rate2m)
-    prometheusURL: http://10.8.6.170:9090
+  - name: internet-to-demo-cluster-3
+    query: sum by (status) (status:http_requests_total:rate2m)
+    prometheusURL: http://localhost:9090
     source:
       replacement: INTERNET
     target:
-      replacement: bucketeer
+      replacement: demo-cluster-3
     status:
       label: status
       dangerRegex: ^5..$
