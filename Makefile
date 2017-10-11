@@ -1,12 +1,5 @@
 GO_ENV ?= CGO_ENABLED=0
 GO ?= go
-GO_PKGS ?= $(shell go list ./... | grep -v /vendor/)
-GODEP ?= godep
-GOLINT ?= golint
-GOVENDOR ?= govendor
-
-DOCKER ?= docker
-DOCKER_REGISTRY := asia.gcr.io/$(PROJECT_ID)
 
 BUILD_VERSION ?= $(shell git describe --tags)
 BUILD_BRANCH ?= $(shell git rev-parse --abbrev-ref @)
