@@ -8,8 +8,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// TODO: maxVolumeRate
-
 func LoadFile(path string) (*Config, error) {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -40,6 +38,7 @@ var (
 
 type Config struct {
 	GraphName          string        `yaml:"graphName"`
+	MaxVolumeRate      float64       `yaml:"maxVolumeRate,omitempty"`
 	Clusters           []*Cluster    `yaml:"clusters,omitempty"`
 	ClusterConnections []*Connection `yaml:"clusterConnections,omitempty"`
 	Classes            []*NodeClass  `yaml:"classes,omitempty"`

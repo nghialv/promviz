@@ -58,26 +58,23 @@ func main() {
 	a.Flag("metric.listen-address", "Address to listen on for metrics.").
 		Default(":9092").StringVar(&cfg.metricAddress)
 
-	a.Flag("metric.path", "Address to listen on for metrics.").
+	a.Flag("metric.path", "Path to output promviz's metrics.").
 		Default("/metrics").StringVar(&cfg.metricPath)
 
 	a.Flag("api.listen-address", "Address to listen on for API.").
 		Default(":9091").StringVar(&cfg.api.ListenAddress)
 
-	a.Flag("retrieval.scrape-interval", "").
+	a.Flag("retrieval.scrape-interval", "How frequently to scrape metrics from prometheus.").
 		Default("10s").DurationVar(&cfg.retrieval.ScrapeInterval)
 
-	a.Flag("retrieval.scrape-timeout", "").
+	a.Flag("retrieval.scrape-timeout", "How long until a scrape request times out.").
 		Default("8s").DurationVar(&cfg.retrieval.ScrapeTimeout)
 
-	a.Flag("cache.size", "The max number of graph-data items can be cached.").
+	a.Flag("cache.size", "The maximum number of snapshots can be cached.").
 		Default("100").IntVar(&cfg.cache.Size)
 
 	a.Flag("storage.retention", "How long to retain graph data in the storage.").
 		Default("24h").DurationVar(&cfg.storage.Retention)
-
-	a.Flag("storage.chunk-length", "The length time of a chunk.").
-		Default("30s").DurationVar(&cfg.storage.ChunkLength)
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
@@ -86,6 +83,7 @@ func main() {
 		os.Exit(2)
 	}
 
+	// TODO: log lever
 	logger, err := zap.NewProduction()
 	if err != nil {
 		os.Exit(2)
