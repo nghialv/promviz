@@ -16,7 +16,6 @@ BUILD_OPTS ?= -ldflags "$(LDFLAGS_PREFIX).Version=$(BUILD_VERSION) $(LDFLAGS_PRE
 
 .PHONY: build
 build: BUILD_DIR ?= ./build
+build: BUILD_ENV ?= GOOS=linux GOARCH=amd64
 build:
-	$(GO_ENV) $(GO) build $(BUILD_OPTS) -o $(BUILD_DIR)/promviz ./cmd/promviz/main.go
-
-#$(BUILD_ENV) $(GO_ENV) $(GO) build $(BUILD_OPTS) -o $(BUILD_DIR)/promviz ./cmd/promviz/main.go
+	$(BUILD_ENV) $(GO_ENV) $(GO) build $(BUILD_OPTS) -o $(BUILD_DIR)/promviz ./cmd/promviz/main.go
