@@ -17,10 +17,10 @@ type Node struct {
 	Updated     int64         `json:"updated,omitempty"`
 	MaxVolume   float64       `json:"maxVolume,omitempty"`
 	Class       string        `json:"class,omitempty"`
-	Metadata    *Metadata     `json:"metadata,omitempty"`
+	Metadata    *Metadata     `json:"metadata"`
 	Nodes       []*Node       `json:"nodes,omitempty"`
-	Connections []*Connection `json:"connections,omitempty"`
-	Notices     []*Notice     `json:"notices,omitempty"`
+	Connections []*Connection `json:"connections"`
+	Notices     []*Notice     `json:"notices"`
 	// Props
 }
 
@@ -28,9 +28,9 @@ type Connection struct {
 	Source   string    `json:"source"`
 	Target   string    `json:"target"`
 	Class    string    `json:"class,omitempty"`
-	Metadata *Metadata `json:"metadata,omitempty"`
-	Metrics  *Metrics  `json:"metrics,omitempty"`
-	Notices  []*Notice `json:"notices,omitempty"`
+	Metadata *Metadata `json:"metadata"`
+	Metrics  *Metrics  `json:"metrics"`
+	Notices  []*Notice `json:"notices"`
 }
 
 type Metadata struct {
@@ -38,21 +38,21 @@ type Metadata struct {
 }
 
 type Notice struct {
-	Title    string `json:"title,omitempty"`
+	Title    string `json:"title"`
 	Subtitle string `json:"subtitle,omitempty"`
 	Link     string `json:"link,omitempty"`
-	Severity int    `json:"severity,omitempty"`
+	Severity int    `json:"severity"`
 }
 
 type Metrics struct {
-	Danger  float64 `json:"danger,omitempty"`
-	Warning float64 `json:"warning,omitempty"`
-	Normal  float64 `json:"normal,omitempty"`
+	Danger  float64 `json:"danger"`
+	Warning float64 `json:"warning"`
+	Normal  float64 `json:"normal"`
 }
 
 type Class struct {
 	Name  string `json:"name"`
-	Color string `json:"color,omitempty"`
+	Color string `json:"color"`
 }
 
 type NodeConnectionSet struct {

@@ -91,5 +91,8 @@ clusterConnections:
 
 classes:
   - name: http
+    color: rgb(128, 128, 128)
   - name: grpc
+    color: rgb(128, 128, 128)
+  - name: redis
     color: rgb(128, 128, 128)
