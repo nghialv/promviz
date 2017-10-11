@@ -4,6 +4,10 @@ import (
 	"time"
 )
 
+const (
+	ChunkLength = 30 * time.Second
+)
+
 type Chunk struct {
 	ID              int64       `json:"id"`
 	SortedSnapshots []*Snapshot `json:"snapshots"`
@@ -17,7 +21,7 @@ func NewChunk(id int64) *Chunk {
 	}
 }
 
-func (c *Chunk) GetNearestSnapshot(ts time.Time) *Snapshot {
+func (c *Chunk) FindBestSnapshot(ts time.Time) *Snapshot {
 	if len(c.SortedSnapshots) == 0 {
 		return nil
 	}
@@ -26,6 +30,7 @@ func (c *Chunk) GetNearestSnapshot(ts time.Time) *Snapshot {
 			return c.SortedSnapshots[i]
 		}
 	}
+	// TODO: should returns nil and load pre chunk to get more better one
 	return c.SortedSnapshots[0]
 }
 

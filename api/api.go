@@ -44,7 +44,7 @@ func newApiMetrics(r prometheus.Registerer) *apiMetrics {
 			Name:      "requests_total",
 			Help:      "Total number of handled requests.",
 		},
-			[]string{"path", "status"},
+			[]string{"handler", "status"},
 		),
 		latency: prometheus.NewSummaryVec(prometheus.SummaryOpts{
 			Namespace: namespace,
@@ -52,7 +52,7 @@ func newApiMetrics(r prometheus.Registerer) *apiMetrics {
 			Name:      "latency_seconds",
 			Help:      "Latency for handling request.",
 		},
-			[]string{"path"},
+			[]string{"handler", "status"},
 		),
 	}
 	if r != nil {
@@ -112,14 +112,23 @@ func (h *handler) Stop() error {
 }
 
 func (h *handler) reloadHandler(w http.ResponseWriter, r *http.Request) {
+	status := http.StatusOK
+	defer track(h.metrics, "Reload")(&status)
+
 	rc := make(chan error)
 	h.reloadCh <- rc
 	if err := <-rc; err != nil {
-		http.Error(w, fmt.Sprintf("Failed to reload config: %s", err), http.StatusInternalServerError)
+		status = http.StatusInternalServerError
+		http.Error(w, fmt.Sprintf("Failed to reload config: %s", err), status)
+		return
 	}
+	w.WriteHeader(status)
 }
 
 func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
+	status := http.StatusOK
+	defer track(h.metrics, "GetGraph")(&status)
+
 	getSnapshot := h.querier.GetLatestSnapshot
 	query := req.URL.Query()
 	offsets := query["offset"]
@@ -127,13 +136,14 @@ func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
 	if len(offsets) != 0 {
 		offset, err := strconv.Atoi(offsets[0])
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid offset (%s): %s", offsets[0], err), http.StatusBadRequest)
+			status = http.StatusBadRequest
+			http.Error(w, fmt.Sprintf("Invalid offset (%s): %s", offsets[0], err), status)
 			return
 		}
 
 		if offset > 0 {
 			ts := time.Now().Add(time.Duration(-offset) * time.Second)
-			chunkID := model.ChunkID(time.Second*30, ts)
+			chunkID := model.ChunkID(model.ChunkLength, ts)
 
 			getSnapshot = func() (*model.Snapshot, error) {
 				chunk := h.cache.Get(chunkID)
@@ -150,21 +160,39 @@ func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
 						h.cache.Put(chunkID, chunk)
 					}
 				}
-				snapshot := chunk.GetNearestSnapshot(ts)
-				if snapshot == nil {
-					return nil, fmt.Errorf("Not found snapshot")
+
+				snapshot := chunk.FindBestSnapshot(ts)
+				if snapshot != nil {
+					return snapshot, nil
 				}
-				return snapshot, err
+
+				h.logger.Warn("Unabled to find snapshot in chunk",
+					zap.Time("ts", ts),
+					zap.Int("chunkLength", len(chunk.SortedSnapshots)),
+					zap.Any("chunk", chunk))
+
+				return nil, fmt.Errorf("Not found snapshot")
 			}
 		}
 	}
 
 	snapshot, err := getSnapshot()
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to get snapshot: %s", err), http.StatusNotFound)
+		status = http.StatusNotFound
+		http.Error(w, fmt.Sprintf("Failed to get snapshot: %s", err), status)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	w.Write([]byte(snapshot.GraphJSON))
+}
+
+func track(metrics *apiMetrics, handler string) func(*int) {
+	start := time.Now()
+	return func(status *int) {
+		s := fmt.Sprintf("%d", *status)
+		metrics.requests.WithLabelValues(handler, s).Inc()
+		metrics.latency.WithLabelValues(handler, s).Observe(time.Since(start).Seconds())
+	}
 }
