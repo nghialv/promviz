@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	// TODO: maybe this should be 5 minute
 	ChunkLength = 30 * time.Second
 )
 

@@ -24,15 +24,17 @@ type Options struct {
 }
 
 type retriever struct {
-	logger   *zap.Logger
-	options  *Options
-	config   *config.Config
+	logger  *zap.Logger
+	options *Options
+	config  *config.Config
+
 	appender storage.Appender
 	querier  querier
-	mtx      sync.RWMutex
-	ctx      context.Context
-	cancel   func()
-	done     chan struct{}
+
+	mtx    sync.RWMutex
+	ctx    context.Context
+	cancel func()
+	done   chan struct{}
 }
 
 func NewRetriever(logger *zap.Logger, r prometheus.Registerer, opts *Options) Retriever {

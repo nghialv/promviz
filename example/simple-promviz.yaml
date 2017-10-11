@@ -1,4 +1,5 @@
 graphName: Demo
+maxVolumeRate: 15
 clusters:
   - name: demo-cluster-1
     serviceConnections:

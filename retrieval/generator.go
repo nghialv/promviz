@@ -13,8 +13,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const maxVolumeRate = 15.0
-
 type generator struct {
 	logger  *zap.Logger
 	cfg     *config.Config
@@ -63,14 +61,14 @@ func (g *generator) generateSnapshot(ctx context.Context, ts time.Time) (*model.
 		if cluster, ok := services[n.Name]; ok {
 			n.Nodes = cluster.Nodes
 			n.Connections = cluster.Connections
-			n.MaxVolume = calculateMaxVolume(cluster.Nodes, cluster.Connections)
+			n.MaxVolume = calculateMaxVolume(cluster.Nodes, cluster.Connections, g.cfg.MaxVolumeRate)
 		}
 	}
 
 	graph := &model.VizceralGraph{
 		Renderer:         "global",
 		Name:             g.cfg.GraphName,
-		MaxVolume:        calculateMaxVolume(clusters.Nodes, clusters.Connections),
+		MaxVolume:        calculateMaxVolume(clusters.Nodes, clusters.Connections, g.cfg.MaxVolumeRate),
 		ServerUpdateTime: ts.Unix(),
 		Nodes:            clusters.Nodes,
 		Connections:      clusters.Connections,
@@ -338,7 +336,7 @@ func extractNodeName(sample *prommodel.Sample, mapping *config.NodeMapping) (str
 	return string(res), nil
 }
 
-func calculateMaxVolume(nodes []*model.Node, connections []*model.Connection) float64 {
+func calculateMaxVolume(nodes []*model.Node, connections []*model.Connection, maxVolumeRate float64) float64 {
 	if len(nodes) == 0 {
 		return 0
 	}

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,11 +29,11 @@ func newStorageMetrics(r prometheus.Registerer) *storageMetrics {
 }
 
 type Options struct {
-	Retention   time.Duration
-	ChunkLength time.Duration
+	Retention time.Duration
 }
 
 type storage struct {
+	dbPath  string
 	logger  *zap.Logger
 	options *Options
 	metrics *storageMetrics
@@ -43,7 +45,16 @@ type storage struct {
 }
 
 func Open(path string, logger *zap.Logger, r prometheus.Registerer, opts *Options) (Storage, error) {
+	dbPath := strings.TrimSuffix(path, "/")
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		err = os.MkdirAll(dbPath, 0755)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &storage{
+		dbPath:  dbPath,
 		logger:  logger,
 		options: opts,
 		metrics: newStorageMetrics(r),
@@ -56,7 +67,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 		return nil
 	}
 
-	chunkID := model.ChunkID(s.options.ChunkLength, snapshot.Timestamp)
+	chunkID := model.ChunkID(model.ChunkLength, snapshot.Timestamp)
 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -133,7 +144,7 @@ func (s *storage) Close() error {
 }
 
 func (s *storage) saveChunk(chunk *model.Chunk) {
-	path := fmt.Sprintf("%s/%d.json", "/Users/a13705/Downloads/db", chunk.ID)
+	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunk.ID)
 	chunk.Completed = true
 	data, err := json.Marshal(chunk)
 	if err != nil {
@@ -150,7 +161,7 @@ func (s *storage) saveChunk(chunk *model.Chunk) {
 }
 
 func (s *storage) loadChunk(chunkID int64) (*model.Chunk, error) {
-	path := fmt.Sprintf("%s/%d.json", "/Users/a13705/Downloads/db", chunkID)
+	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunkID)
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
