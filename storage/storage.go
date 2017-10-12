@@ -117,13 +117,7 @@ func (s *storage) GetChunk(chunkID int64) (Chunk, error) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
-	if s.latestChunk != nil {
-		s.logger.Info("GetChunk", zap.Any("latestChunkID", s.latestChunk.ID), zap.Int64("chunkID", chunkID))
-	} else {
-		s.logger.Info("GetChunk (latestChunk is nil)", zap.Int64("chunkID", chunkID))
-	}
-
-	if s.latestChunk != nil && s.latestChunk.ID() == chunkID {
+	if s.latestChunk.ID() == chunkID {
 		return s.latestChunk.Clone(), nil
 	}
 	return s.loadChunk(chunkID)
@@ -143,26 +137,25 @@ func (s *storage) Close() error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	if s.latestChunk != nil {
-		s.latestChunk.SetCompleted(true)
-		s.saveChunk(s.latestChunk)
-	}
-	return nil
+	s.latestChunk.SetCompleted(true)
+	return s.saveChunk(s.latestChunk)
 }
 
-func (s *storage) saveChunk(chunk Chunk) {
+func (s *storage) saveChunk(chunk Chunk) error {
 	data, err := chunk.Marshal()
 	if err != nil {
 		s.logger.Error("Failed to marshal chunk",
 			zap.Error(err),
 			zap.Any("chunk", chunk))
-		return
+		return err
 	}
 
 	path := chunkPath(s.dbPath, chunk.ID())
 	if err := ioutil.WriteFile(path, data, 0644); err != nil {
-		s.logger.Error("Failed to write snapshot to disk", zap.Error(err))
+		s.logger.Error("Failed to write chunk to disk", zap.Error(err))
+		return err
 	}
+	return nil
 }
 
 func (s *storage) loadChunk(chunkID int64) (Chunk, error) {
