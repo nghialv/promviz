@@ -20,13 +20,14 @@ clusters:
             title: HighErrorRate
 
 clusterConnections:
-  - name: internet-to-demo-cluster-1
-    query: sum by (status) (status:http_requests_total:rate2m)
+  - name: cluster
+    query: cluster:http_requests_total:rate2m
     prometheusURL: http://localhost:9090
     source:
-      replacement: INTERNET
+      label: source
     target:
-      replacement: demo-cluster-1
+      label: target
     status:
       label: status
+      warningRegex: ^4..$
       dangerRegex: ^5..$

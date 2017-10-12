@@ -41,6 +41,13 @@ var (
 	},
 		[]string{"service", "dbname", "status"},
 	)
+
+	clusterGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "cluster:http_requests_total:rate2m",
+		Help: "Requests per second",
+	},
+		[]string{"source", "target", "status"},
+	)
 )
 
 func main() {
@@ -50,11 +57,11 @@ func main() {
 
 	rg := prometheus.NewRegistry()
 	rg.MustRegister(
-		//prometheus.NewGoCollector(),
 		httpGauge,
 		grpcGauge,
 		redisGauge,
 		mongodbGauge,
+		clusterGauge,
 	)
 
 	mux := http.NewServeMux()
@@ -72,6 +79,7 @@ func main() {
 	defer close(doneCh)
 
 	initilizeServices()
+	generateClusterMetric()
 
 	go func() {
 		ticker := time.NewTicker(2 * time.Second)
@@ -305,4 +313,18 @@ func generateMongodbMetric(service, dbname string, total float64, errrate float6
 
 	mongodbGauge.WithLabelValues(service, dbname, "succeeded").Set(rpsSucceeded)
 	mongodbGauge.WithLabelValues(service, dbname, "failed").Set(rpsFailed)
+}
+
+func generateClusterMetric() {
+	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-1", "200").Set(1000)
+	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-1", "500").Set(10)
+
+	clusterGauge.WithLabelValues("demo-cluster-1", "demo-cluster-2", "200").Set(100)
+	clusterGauge.WithLabelValues("demo-cluster-1", "demo-cluster-2", "500").Set(1)
+
+	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-2", "200").Set(500)
+	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-2", "500").Set(5)
+
+	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-3", "200").Set(100)
+	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-3", "500").Set(5)
 }
