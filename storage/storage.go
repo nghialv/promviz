@@ -1,10 +1,13 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -14,7 +17,12 @@ import (
 	"go.uber.org/zap"
 )
 
-var ErrNotFound = errors.New("not found")
+const chunkBlockLength = 2 * time.Minute // 5 * time.Hour
+
+var (
+	ErrNotFound = errors.New("Not found")
+	ErrDBClosed = errors.New("DB already closed")
+)
 
 type storageMetrics struct {
 	createdChunk *prometheus.Counter
@@ -30,7 +38,7 @@ type Options struct {
 }
 
 type storage struct {
-	dbPath  string
+	dbDir   string
 	logger  *zap.Logger
 	options *Options
 	metrics *storageMetrics
@@ -38,23 +46,27 @@ type storage struct {
 	latestSnapshot *model.Snapshot
 	latestChunk    Chunk
 
-	mtx sync.RWMutex
+	mtx    sync.RWMutex
+	ctx    context.Context
+	cancel func()
+	doneCh chan struct{}
 }
 
 func Open(path string, logger *zap.Logger, r prometheus.Registerer, opts *Options) (Storage, error) {
-	dbPath := strings.TrimSuffix(path, "/")
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		err = os.MkdirAll(dbPath, 0755)
-		if err != nil {
-			return nil, err
-		}
+	dbDir := strings.TrimSuffix(path, "/")
+	if err := mkdirIfNotExist(dbDir); err != nil {
+		return nil, err
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 
 	s := &storage{
-		dbPath:  dbPath,
+		dbDir:   dbDir,
 		logger:  logger,
 		options: opts,
 		metrics: newStorageMetrics(r),
+		ctx:     ctx,
+		cancel:  cancel,
+		doneCh:  make(chan struct{}),
 	}
 
 	chunkID := ChunkID(time.Now())
@@ -66,6 +78,7 @@ func Open(path string, logger *zap.Logger, r prometheus.Registerer, opts *Option
 
 	latestChunk.SetCompleted(false)
 	s.latestChunk = latestChunk
+	go s.Run()
 
 	return s, nil
 }
@@ -80,6 +93,12 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
+
+	select {
+	case <-s.ctx.Done():
+		return ErrDBClosed
+	default:
+	}
 
 	logger := s.logger.With(
 		zap.Time("ts", snapshot.Timestamp),
@@ -133,12 +152,41 @@ func (s *storage) GetLatestSnapshot() (*model.Snapshot, error) {
 	return s.latestSnapshot, nil
 }
 
+func (s *storage) Run() {
+	ticker := time.NewTicker(time.Hour)
+	defer func() {
+		ticker.Stop()
+		close(s.doneCh)
+	}()
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+
+		case <-ticker.C:
+			s.retentionCutoff()
+		}
+	}
+}
+
 func (s *storage) Close() error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
+	select {
+	case <-s.doneCh:
+		s.logger.Warn("Already closed")
+		return ErrDBClosed
+	default:
+	}
+	s.cancel()
+
 	s.latestChunk.SetCompleted(true)
-	return s.saveChunk(s.latestChunk)
+	err := s.saveChunk(s.latestChunk)
+	<-s.doneCh
+
+	return err
 }
 
 func (s *storage) saveChunk(chunk Chunk) error {
@@ -150,8 +198,13 @@ func (s *storage) saveChunk(chunk Chunk) error {
 		return err
 	}
 
-	path := chunkPath(s.dbPath, chunk.ID())
-	if err := ioutil.WriteFile(path, data, 0644); err != nil {
+	bpath, cpath := chunkPath(s.dbDir, chunk.ID())
+	if err := mkdirIfNotExist(bpath); err != nil {
+		s.logger.Error("Failed to create block directory", zap.Error(err))
+		return err
+	}
+
+	if err := ioutil.WriteFile(cpath, data, 0644); err != nil {
 		s.logger.Error("Failed to write chunk to disk", zap.Error(err))
 		return err
 	}
@@ -159,8 +212,8 @@ func (s *storage) saveChunk(chunk Chunk) error {
 }
 
 func (s *storage) loadChunk(chunkID int64) (Chunk, error) {
-	path := chunkPath(s.dbPath, chunkID)
-	data, err := ioutil.ReadFile(path)
+	_, cpath := chunkPath(s.dbDir, chunkID)
+	data, err := ioutil.ReadFile(cpath)
 	if err != nil {
 		return nil, err
 	}
@@ -173,6 +226,59 @@ func (s *storage) loadChunk(chunkID int64) (Chunk, error) {
 	return chunk, nil
 }
 
-func chunkPath(dbPath string, chunkID int64) string {
-	return fmt.Sprintf("%s/%d.json", dbPath, chunkID)
+func chunkPath(dbDir string, chunkID int64) (blockPath string, chunkPath string) {
+	bl := int64(chunkBlockLength.Seconds())
+	blockTs := (chunkID / bl) * bl
+
+	blockPath = fmt.Sprintf("%s/%d", dbDir, blockTs)
+	chunkPath = fmt.Sprintf("%s/%d.json", blockPath, chunkID)
+	return
+}
+
+func (s *storage) retentionCutoff() {
+	mints := time.Now().Add(-s.options.Retention - chunkBlockLength).Unix()
+	s.logger.Info("Will cutoff data", zap.Int64("mints", mints))
+
+	if err := retentionCutoff(s.dbDir, mints); err != nil {
+		s.logger.Error("Failed to cutoff old data", zap.Error(err))
+	}
+}
+
+func retentionCutoff(dbDir string, mints int64) error {
+	files, err := ioutil.ReadDir(dbDir)
+	if err != nil {
+		return err
+	}
+	var dirs []string
+
+	for _, f := range files {
+		if !f.IsDir() {
+			continue
+		}
+		ts, err := strconv.ParseInt(f.Name(), 10, 64)
+		if err != nil {
+			continue
+		}
+		if ts > mints {
+			continue
+		}
+		dirs = append(dirs, filepath.Join(dbDir, f.Name()))
+	}
+
+	fmt.Println(dirs)
+	fmt.Println(files)
+
+	for _, dir := range dirs {
+		if err := os.RemoveAll(dir); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func mkdirIfNotExist(dir string) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return os.MkdirAll(dir, 0755)
+	}
+	return nil
 }
