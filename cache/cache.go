@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/nghialv/promviz/model"
+	"github.com/nghialv/promviz/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
@@ -16,8 +16,8 @@ var (
 )
 
 type Cache interface {
-	Get(int64) *model.Chunk
-	Put(int64, *model.Chunk) bool
+	Get(int64) *storage.Chunk
+	Put(int64, *storage.Chunk) bool
 	Reset()
 }
 
@@ -79,7 +79,7 @@ type cache struct {
 
 type item struct {
 	key   int64
-	value *model.Chunk
+	value *storage.Chunk
 }
 
 func NewCache(logger *zap.Logger, r prometheus.Registerer, opts *Options) Cache {
@@ -92,7 +92,7 @@ func NewCache(logger *zap.Logger, r prometheus.Registerer, opts *Options) Cache 
 	return c
 }
 
-func (c *cache) Get(chunkID int64) (chunk *model.Chunk) {
+func (c *cache) Get(chunkID int64) (chunk *storage.Chunk) {
 	defer func() {
 		if chunk == nil {
 			c.metrics.get.WithLabelValues("miss").Inc()
@@ -112,7 +112,7 @@ func (c *cache) Get(chunkID int64) (chunk *model.Chunk) {
 	return
 }
 
-func (c *cache) Put(chunkID int64, chunk *model.Chunk) (ok bool) {
+func (c *cache) Put(chunkID int64, chunk *storage.Chunk) (ok bool) {
 	if chunk == nil {
 		return false
 	}

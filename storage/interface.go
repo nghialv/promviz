@@ -15,6 +15,6 @@ type Appender interface {
 }
 
 type Querier interface {
-	GetChunk(int64) (*model.Chunk, error)
+	GetChunk(int64) (*Chunk, error)
 	GetLatestSnapshot() (*model.Snapshot, error)
 }

@@ -143,7 +143,7 @@ func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
 
 		if offset > 0 {
 			ts := time.Now().Add(time.Duration(-offset) * time.Second)
-			chunkID := model.ChunkID(model.ChunkLength, ts)
+			chunkID := storage.ChunkID(storage.ChunkLength, ts)
 
 			getSnapshot = func() (*model.Snapshot, error) {
 				chunk := h.cache.Get(chunkID)

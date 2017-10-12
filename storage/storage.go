@@ -39,7 +39,7 @@ type storage struct {
 	metrics *storageMetrics
 
 	latest      *model.Snapshot
-	latestChunk *model.Chunk
+	latestChunk *Chunk
 
 	mtx sync.RWMutex
 }
@@ -67,7 +67,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 		return nil
 	}
 
-	chunkID := model.ChunkID(model.ChunkLength, snapshot.Timestamp)
+	chunkID := ChunkID(ChunkLength, snapshot.Timestamp)
 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -78,7 +78,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 	}
 
 	if s.latestChunk == nil {
-		s.latestChunk = model.NewChunk(chunkID)
+		s.latestChunk = NewChunk(chunkID)
 	}
 
 	switch {
@@ -88,7 +88,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 
 	case s.latestChunk.ID < chunkID:
 		s.saveChunk(s.latestChunk)
-		s.latestChunk = model.NewChunk(chunkID)
+		s.latestChunk = NewChunk(chunkID)
 		s.latestChunk.SortedSnapshots = append(s.latestChunk.SortedSnapshots, snapshot)
 
 	default:
@@ -101,7 +101,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 	return nil
 }
 
-func (s *storage) GetChunk(chunkID int64) (*model.Chunk, error) {
+func (s *storage) GetChunk(chunkID int64) (*Chunk, error) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
@@ -112,7 +112,7 @@ func (s *storage) GetChunk(chunkID int64) (*model.Chunk, error) {
 	}
 
 	if s.latestChunk != nil && s.latestChunk.ID == chunkID {
-		c := model.NewChunk(chunkID)
+		c := NewChunk(chunkID)
 		for _, ss := range s.latestChunk.SortedSnapshots {
 			snapshot := &model.Snapshot{}
 			*snapshot = *ss
@@ -143,7 +143,7 @@ func (s *storage) Close() error {
 	return nil
 }
 
-func (s *storage) saveChunk(chunk *model.Chunk) {
+func (s *storage) saveChunk(chunk *Chunk) {
 	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunk.ID)
 	chunk.Completed = true
 	data, err := json.Marshal(chunk)
@@ -160,13 +160,13 @@ func (s *storage) saveChunk(chunk *model.Chunk) {
 	}
 }
 
-func (s *storage) loadChunk(chunkID int64) (*model.Chunk, error) {
+func (s *storage) loadChunk(chunkID int64) (*Chunk, error) {
 	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunkID)
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	chunk := model.NewChunk(chunkID)
+	chunk := NewChunk(chunkID)
 
 	err = json.Unmarshal(data, chunk)
 	if err != nil {
