@@ -39,7 +39,7 @@ type storage struct {
 	metrics *storageMetrics
 
 	latest      *model.Snapshot
-	latestChunk *Chunk
+	latestChunk Chunk
 
 	mtx sync.RWMutex
 }
@@ -67,7 +67,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 		return nil
 	}
 
-	chunkID := ChunkID(ChunkLength, snapshot.Timestamp)
+	chunkID := ChunkID(snapshot.Timestamp)
 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -82,26 +82,26 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 	}
 
 	switch {
-	case s.latestChunk.ID == chunkID:
-		// TODO: append in order
-		s.latestChunk.SortedSnapshots = append(s.latestChunk.SortedSnapshots, snapshot)
+	case s.latestChunk.ID() == chunkID:
+		// TODO: Handle error
+		s.latestChunk.Add(snapshot)
 
-	case s.latestChunk.ID < chunkID:
+	case s.latestChunk.ID() < chunkID:
 		s.saveChunk(s.latestChunk)
 		s.latestChunk = NewChunk(chunkID)
-		s.latestChunk.SortedSnapshots = append(s.latestChunk.SortedSnapshots, snapshot)
+		s.latestChunk.Add(snapshot)
 
 	default:
 		s.logger.Warn("Unabled to add too old snapshot",
 			zap.Time("timestamp", snapshot.Timestamp),
 			zap.Int64("chunkID", chunkID),
-			zap.Int64("latestChunkID", s.latestChunk.ID))
+			zap.Int64("latestChunkID", s.latestChunk.ID()))
 	}
 
 	return nil
 }
 
-func (s *storage) GetChunk(chunkID int64) (*Chunk, error) {
+func (s *storage) GetChunk(chunkID int64) (Chunk, error) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
@@ -111,14 +111,8 @@ func (s *storage) GetChunk(chunkID int64) (*Chunk, error) {
 		s.logger.Info("GetChunk (latestChunk is nil)", zap.Int64("chunkID", chunkID))
 	}
 
-	if s.latestChunk != nil && s.latestChunk.ID == chunkID {
-		c := NewChunk(chunkID)
-		for _, ss := range s.latestChunk.SortedSnapshots {
-			snapshot := &model.Snapshot{}
-			*snapshot = *ss
-			c.SortedSnapshots = append(c.SortedSnapshots, snapshot)
-		}
-		return c, nil
+	if s.latestChunk != nil && s.latestChunk.ID() == chunkID {
+		return s.latestChunk.Clone(), nil
 	}
 	return s.loadChunk(chunkID)
 }
@@ -143,9 +137,10 @@ func (s *storage) Close() error {
 	return nil
 }
 
-func (s *storage) saveChunk(chunk *Chunk) {
+func (s *storage) saveChunk(chunk Chunk) {
 	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunk.ID)
-	chunk.Completed = true
+	// TODO: fix
+	chunk.Completed()
 	data, err := json.Marshal(chunk)
 	if err != nil {
 		s.logger.Error("Failed to marshal chunk",
@@ -160,7 +155,7 @@ func (s *storage) saveChunk(chunk *Chunk) {
 	}
 }
 
-func (s *storage) loadChunk(chunkID int64) (*Chunk, error) {
+func (s *storage) loadChunk(chunkID int64) (Chunk, error) {
 	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunkID)
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
