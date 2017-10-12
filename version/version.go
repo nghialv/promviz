@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	Version        = "none"
-	Branch         = "none"
-	BuildTimestamp = "none"
+	Version        = ""
+	Branch         = ""
+	BuildTimestamp = ""
 	GoVersion      = runtime.Version()
 )
 

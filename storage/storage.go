@@ -85,7 +85,6 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 
 	switch {
 	case s.latestChunk.ID() == chunkID:
-		// TODO: Handle error
 		if err := s.latestChunk.Add(snapshot); err != nil {
 			logger.Error("Failed to add a new snapshot into a chunk", zap.Error(err))
 		}

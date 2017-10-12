@@ -161,7 +161,7 @@ func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
 					}
 				}
 
-				snapshot := chunk.FindBestSnapshot(ts)
+				snapshot := chunk.Iterator().FindBestSnapshot(ts)
 				if snapshot != nil {
 					return snapshot, nil
 				}
