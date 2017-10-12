@@ -284,7 +284,7 @@ func (g *generator) generateConnections(vector prommodel.Vector, conn *config.Co
 			}
 			if rate >= notice.Threshold {
 				vconn.Notices = append(vconn.Notices, &model.Notice{
-					Title:    fmt.Sprintf("[%.5f] %s", rate, notice.Title),
+					Title:    fmt.Sprintf("[%.2f] %s", rate, notice.Title),
 					Subtitle: notice.SubTitle,
 					Link:     notice.Link,
 					Severity: notice.Severity,
