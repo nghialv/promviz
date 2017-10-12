@@ -218,6 +218,24 @@ func updateData() {
 			}
 		}
 	}
+
+	for _, s := range grpcServices {
+		for _, cs := range s.ConnectedServices {
+			switch cs.Type {
+			case ST_GRPC:
+				total := 10*rand.Float64() + 40
+				generateGrpcMetric(cs.FullName(), s.FullName(), total, 0.01)
+
+			case ST_REDIS:
+				total := 10*rand.Float64() + 40
+				generateRedisMetric(s.FullName(), cs.FullName(), total, 0.01)
+
+			case ST_MONGODB:
+				total := 10*rand.Float64() + 40
+				generateMongodbMetric(s.FullName(), cs.FullName(), total, 0.01)
+			}
+		}
+	}
 }
 
 type service struct {
