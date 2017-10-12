@@ -184,6 +184,9 @@ func (s *storage) Close() error {
 
 	s.latestChunk.SetCompleted(true)
 	err := s.saveChunk(s.latestChunk)
+	if err != nil {
+		s.logger.Error("Failed to save chunk to disk", zap.Error(err))
+	}
 	<-s.doneCh
 
 	return err
