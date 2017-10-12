@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -15,9 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	ErrNotFound = errors.New("not found")
-)
+var ErrNotFound = errors.New("not found")
 
 type storageMetrics struct {
 	createdChunk *prometheus.Counter
@@ -52,6 +49,7 @@ func Open(path string, logger *zap.Logger, r prometheus.Registerer, opts *Option
 			return nil, err
 		}
 	}
+	// TODO: load latest chunk
 
 	return &storage{
 		dbPath:  dbPath,
@@ -72,6 +70,10 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
+	logger := s.logger.With(
+		zap.Time("ts", snapshot.Timestamp),
+		zap.Int64("chunkID", chunkID))
+
 	old := s.latest != nil && s.latest.Timestamp.After(snapshot.Timestamp)
 	if !old {
 		s.latest = snapshot
@@ -84,7 +86,9 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 	switch {
 	case s.latestChunk.ID() == chunkID:
 		// TODO: Handle error
-		s.latestChunk.Add(snapshot)
+		if err := s.latestChunk.Add(snapshot); err != nil {
+			logger.Error("Failed to add a new snapshot into a chunk", zap.Error(err))
+		}
 
 	case s.latestChunk.ID() < chunkID:
 		s.saveChunk(s.latestChunk)
@@ -92,10 +96,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 		s.latestChunk.Add(snapshot)
 
 	default:
-		s.logger.Warn("Unabled to add too old snapshot",
-			zap.Time("timestamp", snapshot.Timestamp),
-			zap.Int64("chunkID", chunkID),
-			zap.Int64("latestChunkID", s.latestChunk.ID()))
+		logger.Warn("Unabled to add too old snapshot")
 	}
 
 	return nil
@@ -138,20 +139,18 @@ func (s *storage) Close() error {
 }
 
 func (s *storage) saveChunk(chunk Chunk) {
-	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunk.ID)
-	// TODO: fix
-	chunk.Completed()
-	data, err := json.Marshal(chunk)
+	chunk.SetCompleted()
+	data, err := chunk.Marshal()
 	if err != nil {
 		s.logger.Error("Failed to marshal chunk",
 			zap.Error(err),
 			zap.Any("chunk", chunk))
 		return
 	}
-	err = ioutil.WriteFile(path, data, 0644)
-	if err != nil {
+
+	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunk.ID())
+	if err := ioutil.WriteFile(path, data, 0644); err != nil {
 		s.logger.Error("Failed to write snapshot to disk", zap.Error(err))
-		return
 	}
 }
 
@@ -161,11 +160,11 @@ func (s *storage) loadChunk(chunkID int64) (Chunk, error) {
 	if err != nil {
 		return nil, err
 	}
-	chunk := NewChunk(chunkID)
 
-	err = json.Unmarshal(data, chunk)
-	if err != nil {
+	chunk := NewChunk(chunkID)
+	if err = chunk.Unmarshal(data); err != nil {
 		return nil, err
 	}
+
 	return chunk, nil
 }

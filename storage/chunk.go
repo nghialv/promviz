@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/nghialv/promviz/model"
@@ -14,21 +15,28 @@ type Chunk interface {
 	Add(*model.Snapshot) error
 	FindBestSnapshot(time.Time) *model.Snapshot
 	Clone() Chunk
-	Completed()
+	SetCompleted()
 	IsCompleted() bool
 	Len() int
+
+	Marshal() ([]byte, error)
+	Unmarshal([]byte) error
+}
+
+type Iterator interface {
+	FindBestSnapshot(time.Time) *model.Snapshot
 }
 
 type chunk struct {
-	id              int64             `json:"id"`
-	sortedSnapshots []*model.Snapshot `json:"snapshots"`
-	completed       bool              `json:"completed"`
+	TimestampID     int64             `json:"id"`
+	SortedSnapshots []*model.Snapshot `json:"snapshots"`
+	Completed       bool              `json:"completed"`
 }
 
 func NewChunk(id int64) Chunk {
 	return &chunk{
-		id:              id,
-		sortedSnapshots: make([]*model.Snapshot, 0),
+		TimestampID:     id,
+		SortedSnapshots: make([]*model.Snapshot, 0),
 	}
 }
 
@@ -38,46 +46,54 @@ func ChunkID(ts time.Time) int64 {
 }
 
 func (c *chunk) ID() int64 {
-	return c.id
+	return c.TimestampID
 }
 
 func (c *chunk) Add(snapshot *model.Snapshot) error {
 	// TODO: append in order
-	c.sortedSnapshots = append(c.sortedSnapshots, snapshot)
+	c.SortedSnapshots = append(c.SortedSnapshots, snapshot)
 	return nil
 }
 
 func (c *chunk) FindBestSnapshot(ts time.Time) *model.Snapshot {
-	if len(c.sortedSnapshots) == 0 {
+	if len(c.SortedSnapshots) == 0 {
 		return nil
 	}
-	for i := len(c.sortedSnapshots) - 1; i >= 0; i-- {
-		if ts.After(c.sortedSnapshots[i].Timestamp) {
-			return c.sortedSnapshots[i]
+	for i := len(c.SortedSnapshots) - 1; i >= 0; i-- {
+		if ts.After(c.SortedSnapshots[i].Timestamp) {
+			return c.SortedSnapshots[i]
 		}
 	}
 	// TODO: should returns nil and load pre chunk to get more better one
-	return c.sortedSnapshots[0]
+	return c.SortedSnapshots[0]
 }
 
 func (c *chunk) Clone() Chunk {
-	nc := NewChunk(c.id).(*chunk)
-	for _, ss := range c.sortedSnapshots {
+	nc := NewChunk(c.TimestampID).(*chunk)
+	for _, ss := range c.SortedSnapshots {
 		snapshot := &model.Snapshot{}
 		*snapshot = *ss
-		nc.sortedSnapshots = append(nc.sortedSnapshots, snapshot)
+		nc.SortedSnapshots = append(nc.SortedSnapshots, snapshot)
 	}
 	return nc
 }
 
-func (c *chunk) Completed() {
-	c.completed = true
+func (c *chunk) SetCompleted() {
+	c.Completed = true
 }
 
 func (c *chunk) IsCompleted() bool {
-	return c.completed
+	return c.Completed
 }
 
 func (c *chunk) Len() int {
-	return len(c.sortedSnapshots)
+	return len(c.SortedSnapshots)
+}
+
+func (c *chunk) Marshal() ([]byte, error) {
+	return json.Marshal(c)
+}
+
+func (c *chunk) Unmarshal(data []byte) error {
+	return json.Unmarshal(data, c)
 }
