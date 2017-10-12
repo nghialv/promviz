@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -160,8 +161,7 @@ func initilizeServices() {
 		connectedServices := []*service{}
 
 		for _, cs := range grpcServiceNames {
-			num := len(grpcServiceNames) * len(grpcServiceNames)
-			if s != cs && rand.Intn((num/5)*4) == 0 {
+			if strings.Compare(s, cs) > 0 && rand.Intn(len(grpcServiceNames)*2) == 0 {
 				connectedServices = append(connectedServices, &service{
 					Name: cs,
 					Type: ST_GRPC,
@@ -330,16 +330,16 @@ func generateGrpcMetric(service, client string, total float64, errrate float64) 
 }
 
 func generateRedisMetric(service, dbname string, total float64, errrate float64) {
-	rpsSucceeded := total * errrate
-	rpsFailed := total - rpsSucceeded
+	rpsFailed := total * errrate
+	rpsSucceeded := total - rpsFailed
 
 	redisGauge.WithLabelValues(service, dbname, "succeeded").Set(rpsSucceeded)
 	redisGauge.WithLabelValues(service, dbname, "failed").Set(rpsFailed)
 }
 
 func generateMongodbMetric(service, dbname string, total float64, errrate float64) {
-	rpsSucceeded := total * errrate
-	rpsFailed := total - rpsSucceeded
+	rpsFailed := total * errrate
+	rpsSucceeded := total - rpsFailed
 
 	mongodbGauge.WithLabelValues(service, dbname, "succeeded").Set(rpsSucceeded)
 	mongodbGauge.WithLabelValues(service, dbname, "failed").Set(rpsFailed)
