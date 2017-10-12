@@ -1,4 +1,4 @@
-### Start prometheus
+### Start prometheus-mock
 
 ```
 docker-compose up
