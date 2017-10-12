@@ -108,24 +108,25 @@ func initilizeServices() {
 	for _, s := range mongodbServiceNames {
 		mongodbServices = append(mongodbServices, &service{
 			Name: s,
-			Type: "mongodb",
+			Type: ST_MONGODB,
 		})
 	}
 
 	for _, s := range redisServiceNames {
 		redisServices = append(redisServices, &service{
 			Name: s,
-			Type: "redis",
+			Type: ST_REDIS,
 		})
 	}
 
 	for i, s := range httpServiceNames {
 		connectedServices := []*service{}
+
 		for _, cs := range grpcServiceNames {
 			if i == 0 || rand.Intn(len(grpcServiceNames)/3) == 0 {
 				connectedServices = append(connectedServices, &service{
 					Name: cs,
-					Type: "grpc",
+					Type: ST_GRPC,
 				})
 			}
 		}
@@ -134,7 +135,7 @@ func initilizeServices() {
 			if rand.Intn(3) == 0 {
 				connectedServices = append(connectedServices, &service{
 					Name: cs,
-					Type: "mongodb",
+					Type: ST_MONGODB,
 				})
 			}
 		}
@@ -143,14 +144,14 @@ func initilizeServices() {
 			if rand.Intn(4) == 0 {
 				connectedServices = append(connectedServices, &service{
 					Name: cs,
-					Type: "redis",
+					Type: ST_REDIS,
 				})
 			}
 		}
 
 		httpServices = append(httpServices, &service{
 			Name:              s,
-			Type:              "http",
+			Type:              ST_HTTP,
 			ConnectedServices: connectedServices,
 		})
 	}
@@ -163,7 +164,7 @@ func initilizeServices() {
 			if s != cs && rand.Intn((num/5)*4) == 0 {
 				connectedServices = append(connectedServices, &service{
 					Name: cs,
-					Type: "grpc",
+					Type: ST_GRPC,
 				})
 			}
 		}
@@ -172,7 +173,7 @@ func initilizeServices() {
 			if rand.Intn(3) == 0 {
 				connectedServices = append(connectedServices, &service{
 					Name: cs,
-					Type: "mongodb",
+					Type: ST_MONGODB,
 				})
 			}
 		}
@@ -181,14 +182,14 @@ func initilizeServices() {
 			if rand.Intn(4) == 0 {
 				connectedServices = append(connectedServices, &service{
 					Name: cs,
-					Type: "redis",
+					Type: ST_REDIS,
 				})
 			}
 		}
 
 		grpcServices = append(grpcServices, &service{
 			Name:              s,
-			Type:              "grpc",
+			Type:              ST_GRPC,
 			ConnectedServices: connectedServices,
 		})
 	}
@@ -199,21 +200,21 @@ func updateData() {
 
 	for _, s := range httpServices {
 		total := 20*rand.Float64() + 80
-		generateHttpMetric(s.Name, total, 0.01)
+		generateHttpMetric(s.FullName(), total, 0.01)
 
 		for _, cs := range s.ConnectedServices {
 			switch cs.Type {
-			case "grpc":
+			case ST_GRPC:
 				total = 10*rand.Float64() + 40
-				generateGrpcMetric(cs.Name, s.Name, total, 0.01)
+				generateGrpcMetric(cs.FullName(), s.FullName(), total, 0.01)
 
-			case "redis":
+			case ST_REDIS:
 				total = 10*rand.Float64() + 40
-				generateRedisMetric(cs.Name, s.Name, total, 0.01)
+				generateRedisMetric(s.FullName(), cs.FullName(), total, 0.01)
 
-			case "mongodb":
+			case ST_MONGODB:
 				total = 10*rand.Float64() + 40
-				generateMongodbMetric(cs.Name, s.Name, total, 0.01)
+				generateMongodbMetric(s.FullName(), cs.FullName(), total, 0.01)
 			}
 		}
 	}
@@ -224,6 +225,17 @@ type service struct {
 	Type              string
 	ConnectedServices []*service
 }
+
+func (s *service) FullName() string {
+	return fmt.Sprintf("%s-%s", s.Type, s.Name)
+}
+
+const (
+	ST_HTTP    = "http"
+	ST_GRPC    = "grpc"
+	ST_REDIS   = "redis"
+	ST_MONGODB = "mongodb"
+)
 
 var (
 	httpServices    = []*service{}

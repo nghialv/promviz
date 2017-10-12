@@ -153,7 +153,7 @@ func (s *storage) GetLatestSnapshot() (*model.Snapshot, error) {
 }
 
 func (s *storage) Run() {
-	ticker := time.NewTicker(time.Hour)
+	ticker := time.NewTicker(time.Minute) // TODO: move this to config
 	defer func() {
 		ticker.Stop()
 		close(s.doneCh)

@@ -10,9 +10,10 @@ clusters:
           replacement: INTERNET
         target:
           label: service
-          class: http
+          class: http-server
         status:
           label: status
+          warningRegex: ^4..$
           dangerRegex: ^5..$
         notices:
           - name: highErrorRate
@@ -26,7 +27,7 @@ clusters:
           label: client
         target:
           label: service
-          class: grpc
+          class: grpc-server
         status:
           label: code
           dangerRegex: Internal
@@ -53,41 +54,22 @@ clusters:
           label: dbname
 
 clusterConnections:
-  - name: internet-to-demo-cluster-1
-    query: sum by (status) (status:http_requests_total:rate2m)
+  - name: cluster
+    query: cluster:http_requests_total:rate2m
     prometheusURL: http://localhost:9090
     source:
-      replacement: INTERNET
+      label: source
     target:
-      replacement: demo-cluster-1
+      label: target
     status:
       label: status
-      dangerRegex: ^5..$
-  - name: internet-to-demo-cluster-2
-    query: sum by (status) (status:http_requests_total:rate2m)
-    prometheusURL: http://localhost:9090
-    source:
-      replacement: INTERNET
-    target:
-      replacement: demo-cluster-2
-    status:
-      label: status
-      dangerRegex: ^5..$
-  - name: internet-to-demo-cluster-3
-    query: sum by (status) (status:http_requests_total:rate2m)
-    prometheusURL: http://localhost:9090
-    source:
-      replacement: INTERNET
-    target:
-      replacement: demo-cluster-3
-    status:
-      label: status
+      warningRegex: ^4..$
       dangerRegex: ^5..$
 
 classes:
-  - name: http
-    color: rgb(128, 128, 128)
-  - name: grpc
-    color: rgb(128, 128, 128)
+  - name: http-server
+    color: rgb(128, 128, 150)
+  - name: grpc-server
+    color: rgb(128, 150, 128)
   - name: redis
     color: rgb(128, 128, 128)

@@ -32,7 +32,7 @@ var (
 		Label:       "",
 		Regex:       MustNewRegexp("(.*)"),
 		Replacement: "$1",
-		Class:       "",
+		Class:       "normal",
 	}
 )
 

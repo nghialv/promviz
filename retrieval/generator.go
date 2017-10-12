@@ -159,7 +159,7 @@ func (g *generator) generateNodeConnectionSet(ctx context.Context, cfgConns []*c
 				if _, ok := nodeMap[n.Name]; !ok {
 					nodeMap[n.Name] = nodeFactory(n.Name)
 				}
-				if n.Class != "" {
+				if n.Class != "" && (nodeMap[n.Name].Class == "" || nodeMap[n.Name].Class == "normal") {
 					nodeMap[n.Name].Class = n.Class
 				}
 			}
