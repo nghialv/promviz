@@ -10,8 +10,6 @@ clusters:
           replacement: INTERNET
         target:
           label: service
-          regex: ^demo-(?:(.*)-exporter|(.*))$
-          replacement: $1$2
           class: http
         status:
           label: status
@@ -28,8 +26,6 @@ clusters:
           label: client
         target:
           label: service
-          regex: ^demo-(.+)$
-          replacement: $1
           class: grpc
         status:
           label: code
@@ -40,10 +36,8 @@ clusters:
         prometheusURL: http://localhost:9090
         source:
           label: service
-          regex: ^demo-(?:(ccu-exporter)|(?:(.*)-exporter|(.*)))$
-          replacement: $1$2$3
         target:
-          label: client
+          label: dbname
           class: redis
         status:
           label: status
@@ -56,7 +50,7 @@ clusters:
         query: sum by (client)(status:redis_client_cmds_total:rate2m{status="redis_nil"}) > 0
         prometheusURL: http://localhost:9090
         node:
-          label: client
+          label: dbname
 
 clusterConnections:
   - name: internet-to-demo-cluster-1
