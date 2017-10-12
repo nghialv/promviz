@@ -15,4 +15,5 @@
 - [ ] maxVolumeRate for each class
 - [ ] cmd/config-validator
 - [ ] cmd/k8s-config-reloader
+- [ ] metrics: storage, retrieval
 - [ ] tests
