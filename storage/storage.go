@@ -35,8 +35,8 @@ type storage struct {
 	options *Options
 	metrics *storageMetrics
 
-	latest      *model.Snapshot
-	latestChunk Chunk
+	latestSnapshot *model.Snapshot
+	latestChunk    Chunk
 
 	mtx sync.RWMutex
 }
@@ -49,14 +49,25 @@ func Open(path string, logger *zap.Logger, r prometheus.Registerer, opts *Option
 			return nil, err
 		}
 	}
-	// TODO: load latest chunk
 
-	return &storage{
+	s := &storage{
 		dbPath:  dbPath,
 		logger:  logger,
 		options: opts,
 		metrics: newStorageMetrics(r),
-	}, nil
+	}
+
+	chunkID := ChunkID(time.Now())
+	latestChunk, err := s.loadChunk(chunkID)
+	if err != nil {
+		s.logger.Warn("Unabled to load latest chunk from disk", zap.Error(err))
+		latestChunk = NewChunk(chunkID)
+	}
+
+	latestChunk.SetCompleted(false)
+	s.latestChunk = latestChunk
+
+	return s, nil
 }
 
 func (s *storage) Add(snapshot *model.Snapshot) error {
@@ -74,9 +85,9 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 		zap.Time("ts", snapshot.Timestamp),
 		zap.Int64("chunkID", chunkID))
 
-	old := s.latest != nil && s.latest.Timestamp.After(snapshot.Timestamp)
+	old := s.latestSnapshot != nil && s.latestSnapshot.Timestamp.After(snapshot.Timestamp)
 	if !old {
-		s.latest = snapshot
+		s.latestSnapshot = snapshot
 	}
 
 	if s.latestChunk == nil {
@@ -90,6 +101,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 		}
 
 	case s.latestChunk.ID() < chunkID:
+		s.latestChunk.SetCompleted(true)
 		s.saveChunk(s.latestChunk)
 		s.latestChunk = NewChunk(chunkID)
 		s.latestChunk.Add(snapshot)
@@ -121,10 +133,10 @@ func (s *storage) GetLatestSnapshot() (*model.Snapshot, error) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
-	if s.latest == nil {
+	if s.latestSnapshot == nil {
 		return nil, ErrNotFound
 	}
-	return s.latest, nil
+	return s.latestSnapshot, nil
 }
 
 func (s *storage) Close() error {
@@ -132,13 +144,13 @@ func (s *storage) Close() error {
 	defer s.mtx.Unlock()
 
 	if s.latestChunk != nil {
+		s.latestChunk.SetCompleted(true)
 		s.saveChunk(s.latestChunk)
 	}
 	return nil
 }
 
 func (s *storage) saveChunk(chunk Chunk) {
-	chunk.SetCompleted()
 	data, err := chunk.Marshal()
 	if err != nil {
 		s.logger.Error("Failed to marshal chunk",
@@ -147,14 +159,14 @@ func (s *storage) saveChunk(chunk Chunk) {
 		return
 	}
 
-	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunk.ID())
+	path := chunkPath(s.dbPath, chunk.ID())
 	if err := ioutil.WriteFile(path, data, 0644); err != nil {
 		s.logger.Error("Failed to write snapshot to disk", zap.Error(err))
 	}
 }
 
 func (s *storage) loadChunk(chunkID int64) (Chunk, error) {
-	path := fmt.Sprintf("%s/%d.json", s.dbPath, chunkID)
+	path := chunkPath(s.dbPath, chunkID)
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -166,4 +178,8 @@ func (s *storage) loadChunk(chunkID int64) (Chunk, error) {
 	}
 
 	return chunk, nil
+}
+
+func chunkPath(dbPath string, chunkID int64) string {
+	return fmt.Sprintf("%s/%d.json", dbPath, chunkID)
 }

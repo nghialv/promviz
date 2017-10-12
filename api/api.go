@@ -32,8 +32,9 @@ type Options struct {
 }
 
 type apiMetrics struct {
-	requests *prometheus.CounterVec
-	latency  *prometheus.SummaryVec
+	requests         *prometheus.CounterVec
+	latency          *prometheus.SummaryVec
+	snapshotNotFound prometheus.Counter
 }
 
 func newApiMetrics(r prometheus.Registerer) *apiMetrics {
@@ -54,11 +55,18 @@ func newApiMetrics(r prometheus.Registerer) *apiMetrics {
 		},
 			[]string{"handler", "status"},
 		),
+		snapshotNotFound: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "snapshot_not_found",
+			Help:      "Total number of times unabled to find snapshot.",
+		}),
 	}
 	if r != nil {
 		r.MustRegister(
 			m.requests,
 			m.latency,
+			m.snapshotNotFound,
 		)
 	}
 	return m
@@ -166,6 +174,7 @@ func (h *handler) getGraphHandler(w http.ResponseWriter, req *http.Request) {
 					return snapshot, nil
 				}
 
+				h.metrics.snapshotNotFound.Inc()
 				h.logger.Warn("Unabled to find snapshot in chunk",
 					zap.Time("ts", ts),
 					zap.Int("chunkLength", chunk.Len()),

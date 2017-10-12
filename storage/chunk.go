@@ -15,7 +15,7 @@ var ErrAddToCompletedChunk = errors.New("Unabled to add a new snapshot into a co
 
 type Chunk interface {
 	ID() int64
-	SetCompleted()
+	SetCompleted(bool)
 	IsCompleted() bool
 	Len() int
 	Clone() Chunk
@@ -54,8 +54,8 @@ func (c *chunk) ID() int64 {
 	return c.TimestampID
 }
 
-func (c *chunk) SetCompleted() {
-	c.Completed = true
+func (c *chunk) SetCompleted(completed bool) {
+	c.Completed = completed
 }
 
 func (c *chunk) IsCompleted() bool {
