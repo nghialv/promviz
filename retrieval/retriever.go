@@ -74,6 +74,7 @@ type retriever struct {
 
 	appender storage.Appender
 	querier  querier
+	queue    chan time.Time
 
 	mtx    sync.RWMutex
 	ctx    context.Context
@@ -90,6 +91,7 @@ func NewRetriever(logger *zap.Logger, r prometheus.Registerer, opts *Options) Re
 		metrics: newRetrieverMetrics(r),
 
 		appender: opts.Appender,
+		queue:    make(chan time.Time, 10),
 
 		ctx:    ctx,
 		cancel: cancel,
@@ -101,13 +103,25 @@ func (r *retriever) Run() {
 	r.logger.Info("Starting retriever...")
 	defer close(r.doneCh)
 
-	retrieve := func() {
+	retrieve := func(ts time.Time) {
 		r.logger.Info("Retrieve prometheus data and generate graph data")
 		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(r.options.ScrapeTimeout))
-		r.retrieve(ctx)
+		r.retrieve(ctx, ts)
 		cancel()
 	}
-	retrieve()
+	retrieve(time.Now())
+
+	go func() {
+		for {
+			select {
+			case <-r.ctx.Done():
+				return
+
+			case ts := <-r.queue:
+				retrieve(ts)
+			}
+		}
+	}()
 
 	ticker := time.NewTicker(r.options.ScrapeInterval)
 	defer ticker.Stop()
@@ -116,9 +130,8 @@ func (r *retriever) Run() {
 		select {
 		case <-r.ctx.Done():
 			return
-
-		case <-ticker.C:
-			retrieve()
+		case ts := <-ticker.C:
+			r.queue <- ts
 		}
 	}
 }
@@ -155,7 +168,7 @@ func (r *retriever) ApplyConfig(cfg *config.Config) error {
 	return nil
 }
 
-func (r *retriever) retrieve(ctx context.Context) (err error) {
+func (r *retriever) retrieve(ctx context.Context, ts time.Time) (err error) {
 	defer track(r.metrics, "Retrieve")(&err)
 
 	r.mtx.RLock()
@@ -174,7 +187,7 @@ func (r *retriever) retrieve(ctx context.Context) (err error) {
 		querier: querier,
 	}
 
-	snapshot, err := g.generateSnapshot(ctx, time.Now())
+	snapshot, err := g.generateSnapshot(ctx, ts)
 	if err != nil {
 		r.logger.Error("Failed to generate graph data", zap.Error(err))
 		return
