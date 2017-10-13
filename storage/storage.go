@@ -20,16 +20,44 @@ import (
 const chunkBlockLength = 2 * time.Minute // 5 * time.Hour
 
 var (
+	namespace = "promviz"
+	subsystem = "storage"
+
 	ErrNotFound = errors.New("Not found")
 	ErrDBClosed = errors.New("DB already closed")
 )
 
 type storageMetrics struct {
-	createdChunk *prometheus.Counter
+	ops       *prometheus.CounterVec
+	opLatency *prometheus.SummaryVec
 }
 
 func newStorageMetrics(r prometheus.Registerer) *storageMetrics {
-	m := &storageMetrics{}
+	m := &storageMetrics{
+		ops: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "ops_total",
+			Help:      "Total number of handled ops.",
+		},
+			[]string{"op", "status"},
+		),
+		opLatency: prometheus.NewSummaryVec(prometheus.SummaryOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "op_latency_seconds",
+			Help:      "Latency for handling op.",
+		},
+			[]string{"op", "status"},
+		),
+	}
+
+	if r != nil {
+		r.MustRegister(
+			m.ops,
+			m.opLatency,
+		)
+	}
 	return m
 }
 
@@ -117,6 +145,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 	case s.latestChunk.ID() == chunkID:
 		if err := s.latestChunk.Add(snapshot); err != nil {
 			logger.Error("Failed to add a new snapshot into a chunk", zap.Error(err))
+			return err
 		}
 
 	case s.latestChunk.ID() < chunkID:
@@ -132,24 +161,29 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 	return nil
 }
 
-func (s *storage) GetChunk(chunkID int64) (Chunk, error) {
+func (s *storage) GetChunk(chunkID int64) (chunk Chunk, err error) {
+	defer track(s.metrics, "GetChunk")(&err)
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
 	if s.latestChunk.ID() == chunkID {
-		return s.latestChunk.Clone(), nil
+		chunk = s.latestChunk.Clone()
+		return
 	}
-	return s.loadChunk(chunkID)
+	chunk, err = s.loadChunk(chunkID)
+	return
 }
 
-func (s *storage) GetLatestSnapshot() (*model.Snapshot, error) {
+func (s *storage) GetLatestSnapshot() (snapshot *model.Snapshot, err error) {
+	defer track(s.metrics, "GetLatestSnapshot")(&err)
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
-	if s.latestSnapshot == nil {
-		return nil, ErrNotFound
+	snapshot = s.latestSnapshot
+	if snapshot == nil {
+		err = ErrNotFound
 	}
-	return s.latestSnapshot, nil
+	return
 }
 
 func (s *storage) Run() {
@@ -238,12 +272,15 @@ func chunkPath(dbDir string, chunkID int64) (blockPath string, chunkPath string)
 	return
 }
 
-func (s *storage) retentionCutoff() {
+func (s *storage) retentionCutoff() (err error) {
+	defer track(s.metrics, "RetentionCutoff")(&err)
 	mints := time.Now().Add(-s.options.Retention - chunkBlockLength).Unix()
 
-	if err := retentionCutoff(s.dbDir, mints); err != nil {
+	if err = retentionCutoff(s.dbDir, mints); err != nil {
 		s.logger.Error("Failed to cutoff old data", zap.Error(err))
+		return
 	}
+	return
 }
 
 func retentionCutoff(dbDir string, mints int64) error {
@@ -280,4 +317,13 @@ func mkdirIfNotExist(dir string) error {
 		return os.MkdirAll(dir, 0755)
 	}
 	return nil
+}
+
+func track(metrics *storageMetrics, op string) func(*error) {
+	start := time.Now()
+	return func(err *error) {
+		s := strconv.FormatBool(*err == nil)
+		metrics.ops.WithLabelValues(op, s).Inc()
+		metrics.opLatency.WithLabelValues(op, s).Observe(time.Since(start).Seconds())
+	}
 }
