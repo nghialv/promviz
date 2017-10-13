@@ -1,7 +1,7 @@
 ### Start prometheus-mock
 
 ```
-docker-compose up
+docker-compose up --build
 ```
 
 ### Start promviz
