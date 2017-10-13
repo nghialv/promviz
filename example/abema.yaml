@@ -17,10 +17,47 @@ globalLevel:
 
 clusterLevel:
   - cluster: abema-prd
-    maxVolumeRate: 0.04
+    maxVolumeRate: 0.2
     serviceConnections:
       - name: http
-        query: status:http_microservice_requests_total:rate2m
+        query: status:http_microservice_requests_total:rate2m{service!="abema-web-backend"}
+        prometheusURL: http://10.83.254.213:9090
+        source:
+          replacement: INTERNET
+        target:
+          label: service
+          regex: ^abema-(?:(.*)-exporter|(.*))$
+          replacement: $1$2
+          class: http-server
+        status:
+          label: status
+          warningRegex: ^4..$
+          dangerRegex: ^5..$
+        notices:
+          - name: highErrorRate
+            statusType: danger
+            threshold: 0.01
+            title: HighErrorRate
+            severity: 1
+      - name: http-web-backend
+        query: status:http_microservice_requests_total:rate2m{service="abema-web-backend"}
+        prometheusURL: http://10.83.254.213:9090
+        source:
+          replacement: web
+        target:
+          replacement: web-backend
+        status:
+          label: status
+          warningRegex: ^4..$
+          dangerRegex: ^5..$
+        notices:
+          - name: highErrorRate
+            statusType: danger
+            threshold: 0.01
+            title: HighErrorRate
+            severity: 1
+      - name: nginx
+        query: status:nginx_http_requests_total:rate2m
         prometheusURL: http://10.83.254.213:9090
         source:
           replacement: INTERNET
@@ -54,12 +91,12 @@ clusterLevel:
           dangerRegex: Internal
           warningRegex: Unavailable|DataLoss
       - name: redis
-        query: status:abema_redis_client_cmds_total:rate2m
+        query: status:abema_redis_client_cmds_total:rate2m / 6
         prometheusURL: http://10.83.255.126:9090
         source:
           label: service
-          regex: ^abema-(?:(.*)-exporter|(.*))$
-          replacement: $1$2
+          regex: ^abema-(?:(ccu-exporter)|(?:(.*)-exporter|(.*)))$
+          replacement: $1$2$3
         target:
           label: client
           class: redis
@@ -76,6 +113,42 @@ clusterLevel:
         target:
           label: client
           class: mongodb
+      - name: glasgow
+        query: status:abema_glasgow_client_requests_total:rate2m
+        prometheusURL: http://10.83.255.126:9090
+        source:
+          label: service
+          regex: ^abema-(?:(.*)-exporter|(.*))$
+          replacement: $1$2
+        target:
+          replacement: GLASGOW
+          class: external
+        status:
+          label: status
+          dangerRegex: failed
+      - name: gcs
+        query: status:abema_gcs_client_requests_total:rate2m
+        prometheusURL: http://10.83.255.126:9090
+        source:
+          label: service
+          regex: ^abema-(?:(.*)-exporter|(.*))$
+          replacement: $1$2
+        target:
+          replacement: GCS
+          class: gcp
+        status:
+          label: status
+          dangerRegex: ErrUnknown|failed
+      - name: pubsub
+        query: service:abema_pubsub_publisher_sent_total:rate2m / 10
+        prometheusURL: http://10.83.255.126:9090
+        source:
+          label: service
+          regex: ^abema-(?:(.*)-exporter|(.*))$
+          replacement: $1$2
+        target:
+          replacement: PUBSUB
+          class: gcp
     serviceNotices:
       - name: RedisHighErrorRate
         title: High error rate
