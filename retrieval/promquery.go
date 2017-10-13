@@ -30,14 +30,14 @@ type prompool struct {
 
 func newQuerier(logger *zap.Logger, cfg *config.Config) (*prompool, error) {
 	addrs := make(map[string]struct{}, 0)
-	for _, conn := range cfg.ClusterConnections {
+	for _, conn := range cfg.GlobalLevel.Connections {
 		addrs[conn.PrometheusURL] = struct{}{}
 	}
-	for _, cluster := range cfg.Clusters {
-		for _, conn := range cluster.ServiceConnections {
+	for _, cluster := range cfg.ClusterLevel {
+		for _, conn := range cluster.Connections {
 			addrs[conn.PrometheusURL] = struct{}{}
 		}
-		for _, notice := range cluster.ServiceNotices {
+		for _, notice := range cluster.NodeNotices {
 			addrs[notice.PrometheusURL] = struct{}{}
 		}
 	}

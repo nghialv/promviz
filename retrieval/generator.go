@@ -23,9 +23,10 @@ func (g *generator) generateSnapshot(ctx context.Context, ts time.Time) (*model.
 	group, groupCtx := errgroup.WithContext(ctx)
 	var clusters *model.NodeConnectionSet
 	services := make(map[string]*model.NodeConnectionSet)
+	clusterMap := make(map[string]*config.Cluster, len(g.cfg.ClusterLevel))
 
 	group.Go(func() error {
-		cs, err := g.generateNodeConnectionSet(groupCtx, g.cfg.ClusterConnections, nil, ts, newClusterNode)
+		cs, err := g.generateNodeConnectionSet(groupCtx, g.cfg.GlobalLevel.Connections, nil, ts, newClusterNode)
 		if err != nil {
 			return err
 		}
@@ -33,14 +34,16 @@ func (g *generator) generateSnapshot(ctx context.Context, ts time.Time) (*model.
 		return nil
 	})
 
-	for _, cluster := range g.cfg.Clusters {
+	for _, cluster := range g.cfg.ClusterLevel {
 		cluster := cluster
+		clusterMap[cluster.Cluster] = cluster
+
 		group.Go(func() error {
-			ss, err := g.generateNodeConnectionSet(groupCtx, cluster.ServiceConnections, cluster.ServiceNotices, ts, newServiceNode)
+			ss, err := g.generateNodeConnectionSet(groupCtx, cluster.Connections, cluster.NodeNotices, ts, newServiceNode)
 			if err != nil {
 				return err
 			}
-			services[cluster.Name] = ss
+			services[cluster.Cluster] = ss
 			return nil
 		})
 	}
@@ -61,14 +64,14 @@ func (g *generator) generateSnapshot(ctx context.Context, ts time.Time) (*model.
 		if cluster, ok := services[n.Name]; ok {
 			n.Nodes = cluster.Nodes
 			n.Connections = cluster.Connections
-			n.MaxVolume = calculateMaxVolume(cluster.Nodes, cluster.Connections, g.cfg.MaxVolumeRate)
+			n.MaxVolume = calculateMaxVolume(cluster.Nodes, cluster.Connections, clusterMap[n.Name].MaxVolumeRate)
 		}
 	}
 
 	graph := &model.VizceralGraph{
 		Renderer:         "global",
 		Name:             g.cfg.GraphName,
-		MaxVolume:        calculateMaxVolume(clusters.Nodes, clusters.Connections, 1.5),
+		MaxVolume:        calculateMaxVolume(clusters.Nodes, clusters.Connections, g.cfg.GlobalLevel.MaxVolumeRate),
 		ServerUpdateTime: ts.Unix(),
 		Nodes:            clusters.Nodes,
 		Connections:      clusters.Connections,
@@ -360,7 +363,12 @@ func calculateMaxVolume(nodes []*model.Node, connections []*model.Connection, ma
 			max = n
 		}
 	}
-	return float64(max) * maxVolumeRate
+
+	if maxVolumeRate <= 0 || maxVolumeRate > 1 {
+		maxVolumeRate = 0.5
+	}
+
+	return float64(max) / maxVolumeRate
 }
 
 func newServiceNode(name string) *model.Node {

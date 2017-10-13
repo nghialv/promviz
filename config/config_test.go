@@ -13,8 +13,7 @@ func TestLoadSimpleConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	assert.Equal(t, "Demo", cfg.GraphName)
-	assert.Equal(t, 15.0, cfg.MaxVolumeRate)
+	assert.Equal(t, "SimpleDemo", cfg.GraphName)
 }
 
 func TestLoadFullConfig(t *testing.T) {
@@ -24,5 +23,4 @@ func TestLoadFullConfig(t *testing.T) {
 	require.NotNil(t, cfg)
 
 	assert.Equal(t, "Demo", cfg.GraphName)
-	assert.Equal(t, 25.0, cfg.MaxVolumeRate)
 }

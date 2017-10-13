@@ -39,17 +39,22 @@ var (
 )
 
 type Config struct {
-	GraphName          string        `yaml:"graphName"`
-	MaxVolumeRate      float64       `yaml:"maxVolumeRate,omitempty"`
-	Clusters           []*Cluster    `yaml:"clusters,omitempty"`
-	ClusterConnections []*Connection `yaml:"clusterConnections,omitempty"`
-	Classes            []*NodeClass  `yaml:"classes,omitempty"`
+	GraphName    string       `yaml:"graphName"`
+	GlobalLevel  GlobalLevel  `yaml:"globalLevel"`
+	ClusterLevel []*Cluster   `yaml:"clusterLevel"`
+	Classes      []*NodeClass `yaml:"classes,omitempty"`
+}
+
+type GlobalLevel struct {
+	MaxVolumeRate float64       `yaml:"maxVolumeRate,omitempty"`
+	Connections   []*Connection `yaml:"clusterConnections,omitempty"`
 }
 
 type Cluster struct {
-	Name               string        `yaml:"name"`
-	ServiceConnections []*Connection `yaml:"serviceConnections,omitempty"`
-	ServiceNotices     []*NodeNotice `yaml:"serviceNotices,omitempty"`
+	Cluster       string        `yaml:"cluster"`
+	MaxVolumeRate float64       `yaml:"maxVolumeRate,omitempty"`
+	Connections   []*Connection `yaml:"serviceConnections,omitempty"`
+	NodeNotices   []*NodeNotice `yaml:"serviceNotices,omitempty"`
 }
 
 type Connection struct {
