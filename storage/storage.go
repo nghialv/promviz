@@ -72,7 +72,7 @@ func Open(path string, logger *zap.Logger, r prometheus.Registerer, opts *Option
 	chunkID := ChunkID(time.Now())
 	latestChunk, err := s.loadChunk(chunkID)
 	if err != nil {
-		s.logger.Warn("Unabled to load latest chunk from disk", zap.Error(err))
+		s.logger.Info("Not found current chunk from disk. (A new chunk will be created)", zap.Error(err))
 		latestChunk = NewChunk(chunkID)
 	}
 
@@ -240,7 +240,6 @@ func chunkPath(dbDir string, chunkID int64) (blockPath string, chunkPath string)
 
 func (s *storage) retentionCutoff() {
 	mints := time.Now().Add(-s.options.Retention - chunkBlockLength).Unix()
-	s.logger.Info("Will cutoff data", zap.Int64("mints", mints))
 
 	if err := retentionCutoff(s.dbDir, mints); err != nil {
 		s.logger.Error("Failed to cutoff old data", zap.Error(err))
@@ -267,9 +266,6 @@ func retentionCutoff(dbDir string, mints int64) error {
 		}
 		dirs = append(dirs, filepath.Join(dbDir, f.Name()))
 	}
-
-	fmt.Println(dirs)
-	fmt.Println(files)
 
 	for _, dir := range dirs {
 		if err := os.RemoveAll(dir); err != nil {

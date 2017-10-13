@@ -161,7 +161,7 @@ func initilizeServices() {
 		connectedServices := []*service{}
 
 		for _, cs := range grpcServiceNames {
-			if strings.Compare(s, cs) > 0 && rand.Intn(len(grpcServiceNames)*2) == 0 {
+			if strings.Compare(s, cs) > 0 && rand.Intn(len(grpcServiceNames)*3/2) == 0 {
 				connectedServices = append(connectedServices, &service{
 					Name: cs,
 					Type: ST_GRPC,

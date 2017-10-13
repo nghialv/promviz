@@ -3,7 +3,9 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"regexp"
+	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -60,6 +62,13 @@ type Connection struct {
 	Notices       []*ConnectionNotice `yaml:"notices,omitempty"`
 }
 
+func (c *Connection) QueryLink() string {
+	promURL := strings.TrimSuffix(c.PrometheusURL, "/")
+	escapedQuery := url.QueryEscape(c.Query)
+
+	return fmt.Sprintf("%s/graph?g0.expr=%s", promURL, escapedQuery)
+}
+
 type NodeClass struct {
 	Name  string `yaml:"name"`
 	Color string `yaml:"color,omitempty"`
@@ -74,6 +83,16 @@ type NodeNotice struct {
 	Query         string       `yaml:"query,omitempty"`
 	PrometheusURL string       `yaml:"prometheusURL,omitempty"`
 	Node          *NodeMapping `yaml:"node,omitempty"`
+}
+
+func (nn *NodeNotice) QueryLink() string {
+	if nn.Link != "" {
+		return nn.Link
+	}
+
+	promURL := strings.TrimSuffix(nn.PrometheusURL, "/")
+	escapedQuery := url.QueryEscape(nn.Query)
+	return fmt.Sprintf("%s/graph?g0.expr=%s", promURL, escapedQuery)
 }
 
 type NodeMapping struct {

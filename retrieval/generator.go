@@ -282,11 +282,16 @@ func (g *generator) generateConnections(vector prommodel.Vector, conn *config.Co
 			case "warning":
 				rate = m.Warning / m.All
 			}
+
 			if rate >= notice.Threshold {
+				link := notice.Link
+				if link == "" {
+					link = conn.QueryLink()
+				}
 				vconn.Notices = append(vconn.Notices, &model.Notice{
 					Title:    fmt.Sprintf("[%.2f] %s", rate, notice.Title),
 					Subtitle: notice.SubTitle,
-					Link:     notice.Link,
+					Link:     link,
 					Severity: notice.Severity,
 				})
 			}
@@ -307,10 +312,11 @@ func (g *generator) generateNodeNotices(vector prommodel.Vector, noti *config.No
 				zap.Any("sample", s))
 			continue
 		}
+
 		notices[node] = &model.Notice{
 			Title:    noti.Title,
 			Subtitle: noti.SubTitle,
-			Link:     noti.Link,
+			Link:     noti.QueryLink(),
 			Severity: noti.Severity,
 		}
 	}
