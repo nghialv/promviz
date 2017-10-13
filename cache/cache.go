@@ -53,7 +53,7 @@ func newCacheMetrics(r prometheus.Registerer) *cacheMetrics {
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "length",
-			Help:      "Current length of cache.",
+			Help:      "Number of items exist in cache.",
 		}),
 	}
 	if r != nil {

@@ -97,7 +97,7 @@ func NewHandler(logger *zap.Logger, r prometheus.Registerer, opts *Options) Hand
 }
 
 func (h *handler) Run() error {
-	h.logger.Info("Start listening for connections", zap.String("address", h.options.ListenAddress))
+	h.logger.Info("Start listening for incoming connections", zap.String("address", h.options.ListenAddress))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
