@@ -20,4 +20,5 @@
 - [x] cmd/k8s-config-reloader
 - [ ] helm chart
 - [x] metrics: storage, retrieval
+- [ ] suport severity name: info, warning, error
 - [ ] tests
