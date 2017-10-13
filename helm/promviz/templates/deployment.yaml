@@ -3,35 +3,64 @@ kind: Deployment
 metadata:
   name: {{ template "fullname" . }}
   labels:
-    app: {{ template "name" . }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ template "name" . }}
+    release: {{ .Release.Name }}
+  {{- if .Values.environment }}
+    environment: {{ .Values.environment }}
+  {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
         app: {{ template "name" . }}
         release: {{ .Release.Name }}
+      {{- if .Values.environment }}
+        environment: {{ .Values.environment }}
+      {{- end }}
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: promviz
+          image: {{ .Values.promviz.image.repository }}:{{ .Values.promviz.image.tag }}
+          imagePullPolicy: {{ .Values.promviz.image.pullPolicy }}
+          args:
+            - --config.file=/etc/promviz/config/promviz.yaml
+            - --log.level=info
+            - --storage.path=/var/promviz/data
+            - --storage.retention=24h
+            - --cache.size=100
+            - --retrieval.scrape-interval=10s
+            - --retrieval.scrape-timeout=8s
+            - --api.listen-address=":9091"
+            - --metric.listen-address=":9092"
+            - --metric.path="/metrics"
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
             httpGet:
               path: /
               port: {{ .Values.service.internalPort }}
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
           readinessProbe:
             httpGet:
               path: /
               port: {{ .Values.service.internalPort }}
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
           resources:
-{{ toYaml .Values.resources | indent 12 }}
-    {{- if .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
-    {{- end }}
+{{ toYaml .Values.promviz.resources | indent 12 }}
+        - name: reloader
+          image: {{ .Values.reloader.image.repository }}:{{ .Values.reloader.image.tag }}
+          imagePullPolicy: {{ .Values.reloader.image.pullPolicy }}
+          args:
+            - --config.promviz-reload-url=http://localhost:9090/-/reload
+            - --config.promviz-config-dir=/etc/promviz/config
+            - --config.log-level=info
+          resources:
+{{ toYaml .Values.reloader.resources | indent 12 }}
