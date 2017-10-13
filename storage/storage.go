@@ -111,14 +111,14 @@ func Open(path string, logger *zap.Logger, r prometheus.Registerer, opts *Option
 	return s, nil
 }
 
-func (s *storage) Add(snapshot *model.Snapshot) error {
+func (s *storage) Add(snapshot *model.Snapshot) (err error) {
+	defer track(s.metrics, "Add")(&err)
 	if snapshot == nil {
 		s.logger.Error("Snapshot is nil")
-		return nil
+		return
 	}
 
 	chunkID := ChunkID(snapshot.Timestamp)
-
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -143,9 +143,9 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 
 	switch {
 	case s.latestChunk.ID() == chunkID:
-		if err := s.latestChunk.Add(snapshot); err != nil {
+		if err = s.latestChunk.Add(snapshot); err != nil {
 			logger.Error("Failed to add a new snapshot into a chunk", zap.Error(err))
-			return err
+			return
 		}
 
 	case s.latestChunk.ID() < chunkID:
@@ -158,7 +158,7 @@ func (s *storage) Add(snapshot *model.Snapshot) error {
 		logger.Warn("Unabled to add too old snapshot")
 	}
 
-	return nil
+	return
 }
 
 func (s *storage) GetChunk(chunkID int64) (chunk Chunk, err error) {
