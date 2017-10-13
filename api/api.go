@@ -120,6 +120,11 @@ func (h *handler) Stop() error {
 }
 
 func (h *handler) reloadHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, fmt.Sprintf("Invalid request method"), http.StatusNotImplemented)
+		return
+	}
+
 	status := http.StatusOK
 	defer track(h.metrics, "Reload")(&status)
 
