@@ -16,7 +16,6 @@
 ## TODO
 
 - [x] Auto generate notice link to prometheus query
-- [ ] maxVolumeRate for each class
 - [ ] cmd/config-validator
 - [x] cmd/k8s-config-reloader
 - [ ] helm chart
