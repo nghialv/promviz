@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	version = ""
+	Version = ""
 )
 
 type Config struct {
@@ -30,7 +30,7 @@ func main() {
 	cfg := Config{}
 
 	a := kingpin.New(filepath.Base(os.Args[0]), "The promviz config reloader for k8s")
-	a.Version(version)
+	a.Version(Version)
 	a.HelpFlag.Short('h')
 
 	a.Flag("config.promviz-config-dir", "The directory contains Promviz configuration file.").
