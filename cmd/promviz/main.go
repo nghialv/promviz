@@ -58,13 +58,13 @@ func main() {
 	a.Flag("metric.listen-address", "Address to listen on for metrics.").
 		Default(":9092").StringVar(&cfg.metricAddress)
 
-	a.Flag("metric.path", "Path to output promviz's metrics.").
+	a.Flag("metric.path", "Path to output promviz inside metrics.").
 		Default("/metrics").StringVar(&cfg.metricPath)
 
-	a.Flag("api.listen-address", "Address to listen on for API.").
+	a.Flag("api.listen-address", "Address to listen on for API requests.").
 		Default(":9091").StringVar(&cfg.api.ListenAddress)
 
-	a.Flag("retrieval.scrape-interval", "How frequently to scrape metrics from prometheus.").
+	a.Flag("retrieval.scrape-interval", "How frequently to scrape metrics from prometheuses.").
 		Default("10s").DurationVar(&cfg.retrieval.ScrapeInterval)
 
 	a.Flag("retrieval.scrape-timeout", "How long until a scrape request times out.").
@@ -121,6 +121,11 @@ func main() {
 		registry,
 		&cfg.retrieval,
 	)
+
+	if err := reloadConfig(cfg.configFile, logger, retriever); err != nil {
+		logger.Error("Failed to run first reloading config", zap.Error(err))
+	}
+
 	go retriever.Run()
 	defer retriever.Stop()
 
@@ -141,10 +146,6 @@ func main() {
 	logger.Info("Starting promviz", zap.String("info", version.String()))
 	go apiHandler.Run()
 	defer apiHandler.Stop()
-
-	if err := reloadConfig(cfg.configFile, logger, retriever); err != nil {
-		logger.Error("Failed to run first reloading config", zap.Error(err))
-	}
 
 	go func() {
 		for {
