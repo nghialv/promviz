@@ -7,6 +7,10 @@
 
 ## Install
 
+### Docker image
+
+### Helm chart
+
 ## Configuration
 
 ## TODO
