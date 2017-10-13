@@ -2,6 +2,8 @@ package retrieval
 
 import (
 	"context"
+	"errors"
+	"strconv"
 	"sync"
 	"time"
 
@@ -9,6 +11,13 @@ import (
 	"github.com/nghialv/promviz/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+)
+
+var (
+	namespace = "promviz"
+	subsystem = "retriver"
+
+	ErrConfigNotSet = errors.New("Config has been not set")
 )
 
 type Retriever interface {
@@ -23,10 +32,45 @@ type Options struct {
 	Appender       storage.Appender
 }
 
+type retrieverMetrics struct {
+	ops       *prometheus.CounterVec
+	opLatency *prometheus.SummaryVec
+}
+
+func newRetrieverMetrics(r prometheus.Registerer) *retrieverMetrics {
+	m := &retrieverMetrics{
+		ops: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "ops_total",
+			Help:      "Total number of handled ops.",
+		},
+			[]string{"op", "status"},
+		),
+		opLatency: prometheus.NewSummaryVec(prometheus.SummaryOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "op_latency_seconds",
+			Help:      "Latency for handling op.",
+		},
+			[]string{"op", "status"},
+		),
+	}
+
+	if r != nil {
+		r.MustRegister(
+			m.ops,
+			m.opLatency,
+		)
+	}
+	return m
+}
+
 type retriever struct {
 	logger  *zap.Logger
 	options *Options
 	config  *config.Config
+	metrics *retrieverMetrics
 
 	appender storage.Appender
 	querier  querier
@@ -41,12 +85,15 @@ func NewRetriever(logger *zap.Logger, r prometheus.Registerer, opts *Options) Re
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &retriever{
-		logger:   logger,
-		options:  opts,
+		logger:  logger,
+		options: opts,
+		metrics: newRetrieverMetrics(r),
+
 		appender: opts.Appender,
-		ctx:      ctx,
-		cancel:   cancel,
-		doneCh:   make(chan struct{}),
+
+		ctx:    ctx,
+		cancel: cancel,
+		doneCh: make(chan struct{}),
 	}
 }
 
@@ -108,7 +155,9 @@ func (r *retriever) ApplyConfig(cfg *config.Config) error {
 	return nil
 }
 
-func (r *retriever) retrieve(ctx context.Context) error {
+func (r *retriever) retrieve(ctx context.Context) (err error) {
+	defer track(r.metrics, "Retrieve")(&err)
+
 	r.mtx.RLock()
 	cfg := r.config
 	querier := r.querier
@@ -116,7 +165,7 @@ func (r *retriever) retrieve(ctx context.Context) error {
 
 	if cfg == nil {
 		r.logger.Warn("Config has not been set")
-		return nil
+		return ErrConfigNotSet
 	}
 
 	g := &generator{
@@ -128,14 +177,23 @@ func (r *retriever) retrieve(ctx context.Context) error {
 	snapshot, err := g.generateSnapshot(ctx, time.Now())
 	if err != nil {
 		r.logger.Error("Failed to generate graph data", zap.Error(err))
-		return err
+		return
 	}
 
 	err = r.appender.Add(snapshot)
 	if err != nil {
 		r.logger.Error("Failed to add snapshot to storage", zap.Error(err))
-		return err
+		return
 	}
 
-	return nil
+	return
+}
+
+func track(metrics *retrieverMetrics, op string) func(*error) {
+	start := time.Now()
+	return func(err *error) {
+		s := strconv.FormatBool(*err == nil)
+		metrics.ops.WithLabelValues(op, s).Inc()
+		metrics.opLatency.WithLabelValues(op, s).Observe(time.Since(start).Seconds())
+	}
 }
