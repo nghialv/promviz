@@ -1,12 +1,10 @@
-### Start prometheus-mock
-
-- with simple configuration
+- Simple configuration example
 
 ```
 docker-compose -f simple-compose.yaml up --build
 ```
 
-- with full configuration
+- Full configuration example
 
 ```
 docker-compose -f full-compose.yaml up --build
