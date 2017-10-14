@@ -55,9 +55,8 @@ Please feel free to create an issue or pull request.
 - [x] Auto generate notice link to prometheus query
 - [x] metrics: storage, retrieval
 - [x] cmd/k8s-config-reloader
-- [ ] configurable the color of normal class
-- [ ] templating notices
+- [x] configurable the color of normal class
+- [x] templating notices
 - [ ] helm chart
 - [ ] cmd/config-validator
-- [ ] suport severity name: info, warning, error
 - [ ] tests
