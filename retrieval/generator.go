@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"strconv"
 	"time"
 
 	"github.com/nghialv/promviz/config"
@@ -321,7 +320,7 @@ func (g *generator) generateConnections(vector prommodel.Vector, conn *config.Co
 			title := notice.Title
 			var buf bytes.Buffer
 			labelMap := map[string]string{
-				"value": strconv.FormatFloat(rate, 'f', -1, 64),
+				"value": fmt.Sprintf("%.5f", rate),
 			}
 
 			if err = t.Execute(&buf, labelMap); err != nil {
@@ -388,7 +387,7 @@ func (g *generator) generateNodeNotices(vector prommodel.Vector, noti *config.No
 		for k, v := range s.Metric {
 			labelMap[string(k)] = string(v)
 		}
-		labelMap["value"] = strconv.FormatFloat(value, 'f', -1, 64)
+		labelMap["value"] = fmt.Sprintf("%.5f", value)
 		var buf bytes.Buffer
 
 		if err = t.Execute(&buf, labelMap); err != nil {
