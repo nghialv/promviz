@@ -35,15 +35,11 @@ clusterLevel:
           dangerRegex: ^5..$
         notices:
           - name: HighErrorRate
-            statusType: danger
-            threshold: 0.0
             title: "[{{ .value }}] HighErrorRate"
-            severity: 1
-          - name: TooHighErrorRate
             statusType: danger
-            threshold: 0.0
-            title: "[{{ .value }}] TooHighErrorRate"
-            severity: 2
+            severityThreshold:
+              warning: 0.00001
+              error: 0.002
       - name: http-web-backend
         query: status:http_microservice_requests_total:rate2m{service="abema-web-backend"}
         prometheusURL: http://10.83.254.213:9090
@@ -55,12 +51,6 @@ clusterLevel:
           label: status
           warningRegex: ^4..$
           dangerRegex: ^5..$
-        notices:
-          - name: highErrorRate
-            statusType: danger
-            threshold: 0.01
-            title: HighErrorRate
-            severity: 1
       - name: nginx
         query: status:nginx_http_requests_total:rate2m
         prometheusURL: http://10.83.254.213:9090
@@ -75,12 +65,6 @@ clusterLevel:
           label: status
           warningRegex: ^4..$
           dangerRegex: ^5..$
-        notices:
-          - name: highErrorRate
-            statusType: danger
-            threshold: 0.01
-            title: HighErrorRate
-            severity: 1
       - name: grpc
         query: client_code:grpc_server_requests_total:rate2m{client_host_service!=""}
         prometheusURL: http://10.83.253.14:9090

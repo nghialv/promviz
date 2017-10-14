@@ -114,13 +114,18 @@ type Status struct {
 }
 
 type ConnectionNotice struct {
-	Name       string  `yaml:"name"`
-	Title      string  `yaml:"title"`
-	SubTitle   string  `yaml:"subtitle"`
-	Link       string  `yaml:"link"`
-	Severity   int     `yaml:"severity"`
-	StatusType string  `yaml:"statusType"`
-	Threshold  float64 `yaml:"threshold"`
+	Name              string            `yaml:"name"`
+	Title             string            `yaml:"title"`
+	SubTitle          string            `yaml:"subtitle"`
+	Link              string            `yaml:"link"`
+	StatusType        string            `yaml:"statusType"`
+	SeverityThreshold SeverityThreshold `yaml:"severityThreshold"`
+}
+
+type SeverityThreshold struct {
+	Info    float64 `yaml:"info,omitempty"`
+	Warning float64 `yaml:"warning,omitempty"`
+	Error   float64 `yaml:"error,omitempty"`
 }
 
 type Regexp struct {

@@ -279,6 +279,7 @@ func (g *generator) generateConnections(vector prommodel.Vector, conn *config.Co
 			},
 			Notices: []*model.Notice{},
 		}
+
 		for _, notice := range conn.Notices {
 			rate := 0.0
 			switch notice.StatusType {
@@ -288,7 +289,17 @@ func (g *generator) generateConnections(vector prommodel.Vector, conn *config.Co
 				rate = m.Warning / m.All
 			}
 
-			if rate >= notice.Threshold {
+			severity := -1
+			switch {
+			case notice.SeverityThreshold.Error > 0 && rate >= notice.SeverityThreshold.Error:
+				severity = 2
+			case notice.SeverityThreshold.Warning > 0 && rate >= notice.SeverityThreshold.Warning:
+				severity = 1
+			case notice.SeverityThreshold.Info > 0 && rate >= notice.SeverityThreshold.Info:
+				severity = 0
+			}
+
+			if severity >= 0 {
 				title := notice.Title
 
 				if t, err := template.New("title").Parse(notice.Title); err == nil {
@@ -315,7 +326,7 @@ func (g *generator) generateConnections(vector prommodel.Vector, conn *config.Co
 					Title:    title,
 					Subtitle: notice.SubTitle,
 					Link:     link,
-					Severity: notice.Severity,
+					Severity: severity,
 				})
 			}
 		}
