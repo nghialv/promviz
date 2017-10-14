@@ -24,6 +24,7 @@ clusterLevel:
         prometheusURL: http://10.83.254.213:9090
         source:
           replacement: INTERNET
+          class: entry
         target:
           label: service
           regex: ^abema-(?:(.*)-exporter|(.*))$
@@ -161,11 +162,19 @@ clusterLevel:
           label: client
 
 classes:
-  - name: http-server
+  - name: default
     color: rgb(128, 128, 150)
+  - name: entry
+    color: rgb(186, 213, 237)
+  - name: http-server
+    color: rgb(186, 213, 237)
   - name: grpc-server
-    color: rgb(128, 150, 128)
+    color: rgb(186, 213, 237)
   - name: redis
-    color: rgb(150, 128, 128)
+    color: rgb(128, 128, 128)
   - name: mongodb
     color: rgb(128, 128, 128)
+  - name: gcp
+    color: rgb(128, 150, 128)
+  - name: external
+    color: rgb(128, 150, 128)

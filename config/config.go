@@ -34,15 +34,20 @@ var (
 		Label:       "",
 		Regex:       MustNewRegexp("(.*)"),
 		Replacement: "$1",
-		Class:       "normal",
+		Class:       "default",
+	}
+
+	DefaultClass = Class{
+		Name:  "default",
+		Color: "rgb(186, 213, 237)",
 	}
 )
 
 type Config struct {
-	GraphName    string       `yaml:"graphName"`
-	GlobalLevel  GlobalLevel  `yaml:"globalLevel"`
-	ClusterLevel []*Cluster   `yaml:"clusterLevel"`
-	Classes      []*NodeClass `yaml:"classes,omitempty"`
+	GraphName    string      `yaml:"graphName"`
+	GlobalLevel  GlobalLevel `yaml:"globalLevel"`
+	ClusterLevel []*Cluster  `yaml:"clusterLevel"`
+	Classes      []*Class    `yaml:"classes,omitempty"`
 }
 
 type GlobalLevel struct {
@@ -74,7 +79,7 @@ func (c *Connection) QueryLink() string {
 	return fmt.Sprintf("%s/graph?g0.expr=%s", promURL, escapedQuery)
 }
 
-type NodeClass struct {
+type Class struct {
 	Name  string `yaml:"name"`
 	Color string `yaml:"color,omitempty"`
 }

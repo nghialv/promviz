@@ -56,10 +56,20 @@ func (g *generator) generateSnapshot(ctx context.Context, ts time.Time) (*model.
 	}
 
 	classes := make([]*model.Class, 0, len(g.cfg.Classes))
+	found := false
 	for _, c := range g.cfg.Classes {
+		if c.Name == "default" {
+			found = true
+		}
 		classes = append(classes, &model.Class{
 			Name:  c.Name,
 			Color: c.Color,
+		})
+	}
+	if !found {
+		classes = append(classes, &model.Class{
+			Name:  config.DefaultClass.Name,
+			Color: config.DefaultClass.Color,
 		})
 	}
 
@@ -165,7 +175,7 @@ func (g *generator) generateNodeConnectionSet(ctx context.Context, cfgConns []*c
 				if _, ok := nodeMap[n.Name]; !ok {
 					nodeMap[n.Name] = nodeFactory(n.Name)
 				}
-				if n.Class != "" && (nodeMap[n.Name].Class == "" || nodeMap[n.Name].Class == "normal") {
+				if n.Class != "" && (nodeMap[n.Name].Class == "" || nodeMap[n.Name].Class == "default") {
 					nodeMap[n.Name].Class = n.Class
 				}
 			}
