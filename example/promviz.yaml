@@ -5,7 +5,7 @@ globalLevel:
   clusterConnections:
     - name: cluster
       query: cluster:http_requests_total:rate2m
-      prometheusURL: http://prometheus:9090
+      prometheusURL: http://localhost:9090
       source:
         label: source
       target:
@@ -21,7 +21,7 @@ clusterLevel:
     serviceConnections:
       - name: http
         query: status:http_requests_total:rate2m
-        prometheusURL: http://prometheus:9090
+        prometheusURL: http://localhost:9090
         source:
           replacement: INTERNET
         target:

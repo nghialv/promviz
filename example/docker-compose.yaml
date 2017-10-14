@@ -10,3 +10,9 @@ services:
       - 9090:9090
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  promviz:
+    image: nghialv2607/promviz
+    ports:
+      - 9091:9091
+    volumes:
+      - ./simple.yaml:/etc/promviz/promviz.yaml

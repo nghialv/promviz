@@ -10,6 +10,7 @@ import (
 	"github.com/nghialv/promviz/model"
 	"github.com/nghialv/promviz/storage"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 )
@@ -20,7 +21,7 @@ var (
 )
 
 type Handler interface {
-	Run() error
+	Run(prometheus.Gatherer) error
 	Stop() error
 	Reload() <-chan chan error
 }
@@ -96,7 +97,7 @@ func NewHandler(logger *zap.Logger, r prometheus.Registerer, opts *Options) Hand
 	}
 }
 
-func (h *handler) Run() error {
+func (h *handler) Run(g prometheus.Gatherer) error {
 	h.logger.Info("Start listening for incoming connections", zap.String("address", h.options.ListenAddress))
 
 	c := cors.New(cors.Options{
@@ -104,8 +105,9 @@ func (h *handler) Run() error {
 	})
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", h.getGraphHandler)
+	mux.HandleFunc("/graph", h.getGraphHandler)
 	mux.HandleFunc("/reload", h.reloadHandler)
+	mux.Handle("/metrics", promhttp.HandlerFor(g, promhttp.HandlerOpts{}))
 
 	return http.ListenAndServe(h.options.ListenAddress, c.Handler(mux))
 }

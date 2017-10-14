@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -15,7 +14,6 @@ import (
 	"github.com/nghialv/promviz/storage"
 	"github.com/nghialv/promviz/version"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -30,11 +28,9 @@ var (
 
 func main() {
 	cfg := struct {
-		configFile    string
-		logLevel      string
-		storagePath   string
-		metricAddress string
-		metricPath    string
+		configFile  string
+		logLevel    string
+		storagePath string
 
 		api       api.Options
 		retrieval retrieval.Options
@@ -47,19 +43,13 @@ func main() {
 	a.HelpFlag.Short('h')
 
 	a.Flag("config.file", "Promviz configuration file path.").
-		Default("promviz.yml").StringVar(&cfg.configFile)
+		Default("/etc/promviz/promviz.yaml").StringVar(&cfg.configFile)
 
 	a.Flag("log.level", "The level of logging.").
 		Default("info").StringVar(&cfg.logLevel)
 
 	a.Flag("storage.path", "Base path for graph data storage.").
-		Default("data/").StringVar(&cfg.storagePath)
-
-	a.Flag("metric.listen-address", "Address to listen on for metrics.").
-		Default(":9092").StringVar(&cfg.metricAddress)
-
-	a.Flag("metric.path", "Path to output promviz inside metrics.").
-		Default("/metrics").StringVar(&cfg.metricPath)
+		Default("/promviz").StringVar(&cfg.storagePath)
 
 	a.Flag("api.listen-address", "Address to listen on for API requests.").
 		Default(":9091").StringVar(&cfg.api.ListenAddress)
@@ -144,7 +134,13 @@ func main() {
 	)
 
 	logger.Info("Starting promviz", zap.String("info", version.String()))
-	go apiHandler.Run()
+	errCh := make(chan error)
+
+	go func() {
+		if err := apiHandler.Run(registry); err != nil {
+			errCh <- err
+		}
+	}()
 	defer apiHandler.Stop()
 
 	go func() {
@@ -156,20 +152,6 @@ func main() {
 			} else {
 				rc <- nil
 			}
-		}
-	}()
-
-	errCh := make(chan error)
-	go func() {
-		mux := http.NewServeMux()
-		mux.Handle(cfg.metricPath, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
-
-		logger.Info("Starting metric server...",
-			zap.String("address", cfg.metricAddress),
-			zap.String("path", cfg.metricPath))
-
-		if err := http.ListenAndServe(cfg.metricAddress, mux); err != nil {
-			errCh <- err
 		}
 	}()
 
