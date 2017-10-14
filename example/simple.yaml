@@ -17,7 +17,7 @@ globalLevel:
 
 clusterLevel:
   - cluster: demo-cluster-1
-    maxVolumeRate: 40000
+    maxVolume: 40000
     serviceConnections:
       - name: http
         query: status:http_requests_total:rate2m

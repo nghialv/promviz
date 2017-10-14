@@ -1,19 +1,19 @@
 ### Start prometheus-mock
 
-```
-docker-compose up --build
-```
-
-### Start promviz
-
 - with simple configuration
 
 ```
-go run ../cmd/promviz/main.go --config.file simple.yaml --api.listen-address ":8000" --storage.path ~/Downloads/db
+docker-compose -f simple-compose.yaml up --build
 ```
 
 - with full configuration
 
 ```
-go run ../cmd/promviz/main.go --config.file full.yaml --api.listen-address ":8000" --storage.path ~/Downloads/db
+docker-compose -f full-compose.yaml up --build
 ```
+
+Now, you can reach each service at
+
+- promviz: [http://localhost:8000/graph](http://localhost:8000/graph)
+- prometheus: [http://localhost:9090/graph](http://localhost:9090/graph)
+- mock-metric: [http://localhost:30001/metrics](http://localhost:30001/metrics)

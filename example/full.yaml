@@ -5,7 +5,7 @@ globalLevel:
   clusterConnections:
     - name: cluster
       query: cluster:http_requests_total:rate2m
-      prometheusURL: http://localhost:9090
+      prometheusURL: http://prometheus:9090
       source:
         label: source
       target:
@@ -21,7 +21,7 @@ clusterLevel:
     serviceConnections:
       - name: http
         query: status:http_requests_total:rate2m
-        prometheusURL: http://localhost:9090
+        prometheusURL: http://prometheus:9090
         source:
           replacement: INTERNET
         target:
@@ -40,7 +40,7 @@ clusterLevel:
               error: 0.002
       - name: grpc
         query: client_code:grpc_server_requests_total:rate2m{client!=""}
-        prometheusURL: http://localhost:9090
+        prometheusURL: http://prometheus:9090
         source:
           label: client
         target:
@@ -52,7 +52,7 @@ clusterLevel:
           warningRegex: Unavailable|DataLoss
       - name: redis
         query: status:redis_client_cmds_total:rate2m
-        prometheusURL: http://localhost:9090
+        prometheusURL: http://prometheus:9090
         source:
           label: service
         target:
@@ -63,7 +63,7 @@ clusterLevel:
           dangerRegex: failed
       - name: mongodb
         query: status:mongodb_client_ops_total:rate2m
-        prometheusURL: http://localhost:9090
+        prometheusURL: http://prometheus:9090
         source:
           label: service
         target:
@@ -79,7 +79,7 @@ clusterLevel:
           warning: 0.00001
           error: 0.002
         query: sum by (dbname)(status:redis_client_cmds_total:rate2m{status="redis_nil"}) > 0
-        prometheusURL: http://localhost:9090
+        prometheusURL: http://prometheus:9090
         node:
           label: dbname
 
