@@ -1,7 +1,7 @@
 graphName: SimpleDemo
 
 globalLevel:
-  maxVolumeRate: 0.67
+  maxVolume: 1200
   clusterConnections:
     - name: cluster
       query: cluster:http_requests_total:rate2m
@@ -17,7 +17,7 @@ globalLevel:
 
 clusterLevel:
   - cluster: demo-cluster-1
-    maxVolumeRate: 0.04
+    maxVolumeRate: 40000
     serviceConnections:
       - name: http
         query: status:http_requests_total:rate2m
@@ -30,9 +30,3 @@ clusterLevel:
           label: status
           warningRegex: ^4..$
           dangerRegex: ^5..$
-        notices:
-          - name: highErrorRate
-            statusType: danger
-            threshold: 0.01
-            title: HighErrorRate
-            severity: 1
