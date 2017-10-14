@@ -22,3 +22,5 @@
 - [x] metrics: storage, retrieval
 - [ ] suport severity name: info, warning, error
 - [ ] tests
+- [ ] templating notices
+- [ ] configurable the color of normal class
