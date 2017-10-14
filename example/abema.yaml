@@ -140,17 +140,21 @@ clusterLevel:
           class: gcp
     serviceNotices:
       - name: HttpHighErrorRate
-        title: HighErrorRate
-        severity: 1
-        query: handler:http_microservice_request_5xx_error_percent:rate2m >= 0
-        prometheusURL: http://10.83.255.126:9090
+        title: "[{{ .value }}] HighErrorRate - {{ .handler }}"
+        query: handler:http_microservice_request_4xx_error_percent:rate2m{service="abema-gateway-exporter"} >= 0
+        prometheusURL: http://10.83.254.213:9090
+        severityThreshold:
+          warning: 0.00001
+          error: 0.002
         node:
           label: service
           regex: ^abema-(?:(.*)-exporter|(.*))$
           replacement: $1$2
       - name: RedisHighErrorRate
-        title: HighErrorRate
-        severity: 1
+        title: "[{{ .value }}] HighErrorRate"
+        severityThreshold:
+          warning: 0.00001
+          error: 0.002
         query: sum by (client) (status:abema_redis_client_cmds_total:rate2m{status="redis_nil"}) > 0
         prometheusURL: http://10.83.255.126:9090
         node:

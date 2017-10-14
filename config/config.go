@@ -80,14 +80,14 @@ type NodeClass struct {
 }
 
 type NodeNotice struct {
-	Name          string       `yaml:"name"`
-	Title         string       `yaml:"title"`
-	SubTitle      string       `yaml:"subtitle"`
-	Link          string       `yaml:"link"`
-	Severity      int          `yaml:"severity"`
-	Query         string       `yaml:"query,omitempty"`
-	PrometheusURL string       `yaml:"prometheusURL,omitempty"`
-	Node          *NodeMapping `yaml:"node,omitempty"`
+	Name              string            `yaml:"name"`
+	Title             string            `yaml:"title"`
+	SubTitle          string            `yaml:"subtitle"`
+	Link              string            `yaml:"link"`
+	Query             string            `yaml:"query,omitempty"`
+	PrometheusURL     string            `yaml:"prometheusURL,omitempty"`
+	SeverityThreshold SeverityThreshold `yaml:"severityThreshold"`
+	Node              *NodeMapping      `yaml:"node,omitempty"`
 }
 
 func (nn *NodeNotice) QueryLink() string {

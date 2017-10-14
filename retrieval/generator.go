@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"strconv"
 	"time"
 
 	"github.com/nghialv/promviz/config"
@@ -118,19 +119,19 @@ func (g *generator) generateNodeConnectionSet(ctx context.Context, cfgConns []*c
 		})
 	}
 
-	groupNotices := make([](map[string]*model.Notice), len(cfgNotices), len(cfgNotices))
+	groupNotices := make([](map[string][]*model.Notice), len(cfgNotices), len(cfgNotices))
 
 	for i, cfgNoti := range cfgNotices {
 		i, cfgNoti := i, cfgNoti
 		group.Go(func() error {
 			value, err := g.querier.Query(groupCtx, cfgNoti.PrometheusURL, cfgNoti.Query, ts)
 			if err != nil {
-				g.logger.Error("Failed to send prom query",
+				g.logger.Error("Failed to send promQuery",
 					zap.Error(err),
 					zap.String("prometheusURL", cfgNoti.PrometheusURL),
 					zap.String("query", cfgNoti.Query),
 				)
-				// TODO: rethink
+				// TODO: return nil or error
 				return nil
 			}
 			vector, ok := value.(prommodel.Vector)
@@ -174,7 +175,7 @@ func (g *generator) generateNodeConnectionSet(ctx context.Context, cfgConns []*c
 	for i := range groupNotices {
 		for k, noti := range groupNotices[i] {
 			if node, ok := nodeMap[k]; ok {
-				node.Notices = append(node.Notices, noti)
+				node.Notices = append(node.Notices, noti...)
 			}
 		}
 	}
@@ -298,61 +299,106 @@ func (g *generator) generateConnections(vector prommodel.Vector, conn *config.Co
 			case notice.SeverityThreshold.Info > 0 && rate >= notice.SeverityThreshold.Info:
 				severity = 0
 			}
-
-			if severity >= 0 {
-				title := notice.Title
-
-				if t, err := template.New("title").Parse(notice.Title); err == nil {
-					labelMap := map[string]string{
-						"value": fmt.Sprintf("%f", rate),
-					}
-
-					var buf bytes.Buffer
-					if err = t.Execute(&buf, labelMap); err != nil {
-						g.logger.Error("Failed to execute rendering notice template",
-							zap.Error(err),
-							zap.String("title", title),
-							zap.Any("labelMap", labelMap))
-					}
-					title = buf.String()
-				}
-
-				link := notice.Link
-				if link == "" {
-					link = conn.QueryLink()
-				}
-
-				vconn.Notices = append(vconn.Notices, &model.Notice{
-					Title:    title,
-					Subtitle: notice.SubTitle,
-					Link:     link,
-					Severity: severity,
-				})
+			if severity < 0 {
+				continue
 			}
+
+			t, err := template.New("title").Parse(notice.Title)
+			if err != nil {
+				continue
+			}
+
+			title := notice.Title
+			var buf bytes.Buffer
+			labelMap := map[string]string{
+				"value": strconv.FormatFloat(rate, 'f', -1, 64),
+			}
+
+			if err = t.Execute(&buf, labelMap); err != nil {
+				g.logger.Error("Failed to execute rendering notice template",
+					zap.Error(err),
+					zap.String("title", title),
+					zap.Any("labelMap", labelMap))
+			}
+			title = buf.String()
+			link := notice.Link
+			if link == "" {
+				link = conn.QueryLink()
+			}
+
+			vconn.Notices = append(vconn.Notices, &model.Notice{
+				Title:    title,
+				Subtitle: notice.SubTitle,
+				Link:     link,
+				Severity: severity,
+			})
 		}
+
 		connections = append(connections, vconn)
 	}
 	return connections
 }
 
-func (g *generator) generateNodeNotices(vector prommodel.Vector, noti *config.NodeNotice) map[string]*model.Notice {
-	notices := make(map[string]*model.Notice)
+func (g *generator) generateNodeNotices(vector prommodel.Vector, noti *config.NodeNotice) map[string][]*model.Notice {
+	notices := make(map[string][]*model.Notice)
 	for _, s := range vector {
+		logger := g.logger.With(
+			zap.Any("noti", noti),
+			zap.Any("sample", s))
+
 		node, err := extractNodeName(s, noti.Node)
 		if err != nil {
-			g.logger.Warn("Could not determine node",
-				zap.Error(err),
-				zap.Any("node", noti.Node),
-				zap.Any("sample", s))
+			logger.Warn("Could not determine node", zap.Error(err))
 			continue
 		}
 
-		notices[node] = &model.Notice{
-			Title:    noti.Title,
+		value := float64(s.Value)
+		severity := -1
+
+		switch {
+		case noti.SeverityThreshold.Error > 0 && value >= noti.SeverityThreshold.Error:
+			severity = 2
+		case noti.SeverityThreshold.Warning > 0 && value >= noti.SeverityThreshold.Warning:
+			severity = 1
+		case noti.SeverityThreshold.Info > 0 && value >= noti.SeverityThreshold.Info:
+			severity = 0
+		}
+		if severity < 0 {
+			continue
+		}
+
+		t, err := template.New("title").Parse(noti.Title)
+		if err != nil {
+			logger.Warn("Failed to parse notice title", zap.Error(err))
+			continue
+		}
+
+		title := noti.Title
+		labelMap := make(map[string]string, len(s.Metric)+1)
+		for k, v := range s.Metric {
+			labelMap[string(k)] = string(v)
+		}
+		labelMap["value"] = strconv.FormatFloat(value, 'f', -1, 64)
+		var buf bytes.Buffer
+
+		if err = t.Execute(&buf, labelMap); err != nil {
+			logger.Error("Failed to execute rendering notice template",
+				zap.Error(err),
+				zap.Any("labelMap", labelMap))
+			continue
+		}
+		title = buf.String()
+
+		if _, ok := notices[node]; !ok {
+			notices[node] = make([]*model.Notice, 0)
+		}
+
+		notices[node] = append(notices[node], &model.Notice{
+			Title:    title,
 			Subtitle: noti.SubTitle,
 			Link:     noti.QueryLink(),
-			Severity: noti.Severity,
-		}
+			Severity: severity,
+		})
 	}
 	return notices
 }
