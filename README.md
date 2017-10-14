@@ -39,10 +39,20 @@ I have already prepared 2 examples and put it in the `example` directory.
 You can try it by going to that directory and run
 
 ```
-docker-compose up --build
+docker-compose -f simple-compose.yaml up --build
 ```
 
-Then check your graph at [http:localhost:8080](http:localhost:8080).
+or
+
+```
+docker-compose -f full-compose.yaml up --build
+```
+
+Then checkout each service at:
+- promviz-front: [http://localhost:8080/graph](http://localhost:8080/)
+- promviz: [http://localhost:8000/graph](http://localhost:8000/graph)
+- prometheus: [http://localhost:9090/graph](http://localhost:9090/graph)
+- mock-metric: [http://localhost:30001/metrics](http://localhost:30001/metrics)
 
 ## Configuration
 
