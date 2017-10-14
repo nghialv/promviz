@@ -1,7 +1,7 @@
 graphName: Demo
 
 globalLevel:
-  maxVolumeRate: 0.67
+  maxVolumeRate: 120000
   clusterConnections:
     - name: cluster
       query: cluster:http_requests_total:rate2m
@@ -17,7 +17,7 @@ globalLevel:
 
 clusterLevel:
   - cluster: demo-cluster-1
-    maxVolumeRate: 0.04
+    maxVolumeRate: 400000
     serviceConnections:
       - name: http
         query: status:http_requests_total:rate2m

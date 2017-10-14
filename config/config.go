@@ -51,15 +51,15 @@ type Config struct {
 }
 
 type GlobalLevel struct {
-	MaxVolumeRate float64       `yaml:"maxVolumeRate,omitempty"`
-	Connections   []*Connection `yaml:"clusterConnections,omitempty"`
+	MaxVolume   float64       `yaml:"maxVolume,omitempty"`
+	Connections []*Connection `yaml:"clusterConnections,omitempty"`
 }
 
 type Cluster struct {
-	Cluster       string        `yaml:"cluster"`
-	MaxVolumeRate float64       `yaml:"maxVolumeRate,omitempty"`
-	Connections   []*Connection `yaml:"serviceConnections,omitempty"`
-	NodeNotices   []*NodeNotice `yaml:"serviceNotices,omitempty"`
+	Cluster     string        `yaml:"cluster"`
+	MaxVolume   float64       `yaml:"maxVolume,omitempty"`
+	Connections []*Connection `yaml:"serviceConnections,omitempty"`
+	NodeNotices []*NodeNotice `yaml:"serviceNotices,omitempty"`
 }
 
 type Connection struct {

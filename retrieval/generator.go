@@ -77,14 +77,14 @@ func (g *generator) generateSnapshot(ctx context.Context, ts time.Time) (*model.
 		if cluster, ok := services[n.Name]; ok {
 			n.Nodes = cluster.Nodes
 			n.Connections = cluster.Connections
-			n.MaxVolume = calculateMaxVolume(cluster.Nodes, cluster.Connections, clusterMap[n.Name].MaxVolumeRate)
+			n.MaxVolume = clusterMap[n.Name].MaxVolume // calculateMaxVolume(cluster.Nodes, cluster.Connections, clusterMap[n.Name].MaxVolumeRate)
 		}
 	}
 
 	graph := &model.VizceralGraph{
 		Renderer:         "global",
 		Name:             g.cfg.GraphName,
-		MaxVolume:        calculateMaxVolume(clusters.Nodes, clusters.Connections, g.cfg.GlobalLevel.MaxVolumeRate),
+		MaxVolume:        g.cfg.GlobalLevel.MaxVolume, // calculateMaxVolume(clusters.Nodes, clusters.Connections, g.cfg.GlobalLevel.MaxVolumeRate),
 		ServerUpdateTime: ts.Unix(),
 		Nodes:            clusters.Nodes,
 		Connections:      clusters.Connections,

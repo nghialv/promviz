@@ -1,7 +1,7 @@
 graphName: AbemaTV
 
 globalLevel:
-  maxVolumeRate: 0.67
+  maxVolume: 120000
   clusterConnections:
     - name: cluster
       query: sum by (status) (status:http_microservice_requests_total:rate2m)
@@ -17,7 +17,7 @@ globalLevel:
 
 clusterLevel:
   - cluster: abema-prd
-    maxVolumeRate: 0.2
+    maxVolume: 300000
     serviceConnections:
       - name: http
         query: status:http_microservice_requests_total:rate2m{service!="abema-web-backend"}
@@ -81,7 +81,7 @@ clusterLevel:
           dangerRegex: Internal
           warningRegex: Unavailable|DataLoss
       - name: redis
-        query: status:abema_redis_client_cmds_total:rate2m / 6
+        query: status:abema_redis_client_cmds_total:rate2m / 10
         prometheusURL: http://10.83.255.126:9090
         source:
           label: service
@@ -130,7 +130,7 @@ clusterLevel:
           label: status
           dangerRegex: ErrUnknown|failed
       - name: pubsub
-        query: service:abema_pubsub_publisher_sent_total:rate2m / 10
+        query: service:abema_pubsub_publisher_sent_total:rate2m / 15
         prometheusURL: http://10.83.255.126:9090
         source:
           label: service
