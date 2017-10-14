@@ -36,7 +36,7 @@ clusterLevel:
         notices:
           - name: highErrorRate
             statusType: danger
-            threshold: 0.01
+            threshold: 0.000001
             title: HighErrorRate
             severity: 1
       - name: http-web-backend
@@ -95,8 +95,8 @@ clusterLevel:
         prometheusURL: http://10.83.255.126:9090
         source:
           label: service
-          regex: ^abema-(?:(ccu-exporter)|(?:(.*)-exporter|(.*)))$
-          replacement: $1$2$3
+          regex: ^abema-(?:(ccu-exporter)|(watchtime-ccu-exporter)|(?:(.*)-exporter|(.*)))$
+          replacement: $1$2$3$4
         target:
           label: client
           class: redis
