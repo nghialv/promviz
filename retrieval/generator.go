@@ -1,9 +1,11 @@
 package retrieval
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"time"
 
 	"github.com/nghialv/promviz/config"
@@ -287,12 +289,30 @@ func (g *generator) generateConnections(vector prommodel.Vector, conn *config.Co
 			}
 
 			if rate >= notice.Threshold {
+				title := notice.Title
+
+				if t, err := template.New("title").Parse(notice.Title); err == nil {
+					labelMap := map[string]string{
+						"value": fmt.Sprintf("%f", rate),
+					}
+
+					var buf bytes.Buffer
+					if err = t.Execute(&buf, labelMap); err != nil {
+						g.logger.Error("Failed to execute rendering notice template",
+							zap.Error(err),
+							zap.String("title", title),
+							zap.Any("labelMap", labelMap))
+					}
+					title = buf.String()
+				}
+
 				link := notice.Link
 				if link == "" {
 					link = conn.QueryLink()
 				}
+
 				vconn.Notices = append(vconn.Notices, &model.Notice{
-					Title:    fmt.Sprintf("[%.2f] %s", rate, notice.Title),
+					Title:    title,
 					Subtitle: notice.SubTitle,
 					Link:     link,
 					Severity: notice.Severity,

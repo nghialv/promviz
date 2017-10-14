@@ -34,11 +34,16 @@ clusterLevel:
           warningRegex: ^4..$
           dangerRegex: ^5..$
         notices:
-          - name: highErrorRate
+          - name: HighErrorRate
             statusType: danger
-            threshold: 0.000001
-            title: HighErrorRate
+            threshold: 0.0
+            title: "[{{ .value }}] HighErrorRate"
             severity: 1
+          - name: TooHighErrorRate
+            statusType: danger
+            threshold: 0.0
+            title: "[{{ .value }}] TooHighErrorRate"
+            severity: 2
       - name: http-web-backend
         query: status:http_microservice_requests_total:rate2m{service="abema-web-backend"}
         prometheusURL: http://10.83.254.213:9090
@@ -150,8 +155,17 @@ clusterLevel:
           replacement: PUBSUB
           class: gcp
     serviceNotices:
+      - name: HttpHighErrorRate
+        title: HighErrorRate
+        severity: 1
+        query: handler:http_microservice_request_5xx_error_percent:rate2m >= 0
+        prometheusURL: http://10.83.255.126:9090
+        node:
+          label: service
+          regex: ^abema-(?:(.*)-exporter|(.*))$
+          replacement: $1$2
       - name: RedisHighErrorRate
-        title: High error rate
+        title: HighErrorRate
         severity: 1
         query: sum by (client) (status:abema_redis_client_cmds_total:rate2m{status="redis_nil"}) > 0
         prometheusURL: http://10.83.255.126:9090
