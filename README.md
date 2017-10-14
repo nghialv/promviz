@@ -18,19 +18,10 @@ helm install --name promviz-front ./helm/promviz-front
 
 #### Docker images
 
-Docker images of both `Promviz` and `Promviz-front` are avaiable on [Docker Hub](https://hub.docker.com/r/nghialv2607/promviz).
+Docker images of both `promviz` and `promviz-front` are avaiable on Docker Hub.
 
-You can launch `Promviz` and `Promviz-front` with
-
-```
-$ docker run --name promviz -d -p 127.0.0.1:9091:9091 nghialv2607/promviz
-```
-
-```
-$ docker run --name promviz-front -d -p 127.0.0.1:8080:8080 mjhd-devlion/promviz-front
-```
-
-`Promviz-front` now can reachable at [http:localhost:8080](http:localhost:8080).
+- promviz:  [nghialv2607/promviz](https://hub.docker.com/r/nghialv2607/promviz)
+- promviz-front:  [mjhd-devlion/promviz-front](https://hub.docker.com/r/mjhd-devlion/promviz-front)
 
 ## Example
 
