@@ -13,6 +13,8 @@
 
 ## Configuration
 
+## Contributing
+
 ## TODO
 
 - [x] Auto generate notice link to prometheus query
