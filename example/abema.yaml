@@ -141,8 +141,8 @@ clusterLevel:
           class: gcp
     serviceNotices:
       - name: HttpHighErrorRate
-        title: "[{{ .value }}] HighErrorRate - {{ .handler }}"
-        query: handler:http_microservice_request_4xx_error_percent:rate2m{service="abema-gateway-exporter"} >= 0
+        title: "[{{ .value }}] HighErrorRate {{ .handler }}"
+        query: handler:http_microservice_request_5xx_error_percent:rate2m > 0
         prometheusURL: http://10.83.254.213:9090
         severityThreshold:
           warning: 0.00001
