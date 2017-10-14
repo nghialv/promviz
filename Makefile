@@ -1,6 +1,6 @@
-GO_ENV ?= CGO_ENABLED=0
-GO ?= go
+NAME := promviz
 
+GO_ENV ?= CGO_ENABLED=0
 BUILD_VERSION ?= $(shell git describe --tags)
 BUILD_BRANCH ?= $(shell git rev-parse --abbrev-ref @)
 BUILD_TIMESTAMP ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -11,4 +11,4 @@ BUILD_OPTS ?= -ldflags "$(LDFLAGS_PREFIX).Version=$(BUILD_VERSION) $(LDFLAGS_PRE
 build: BUILD_DIR ?= ./build
 build: BUILD_ENV ?= GOOS=linux GOARCH=amd64
 build:
-	$(BUILD_ENV) $(GO_ENV) $(GO) build $(BUILD_OPTS) -o $(BUILD_DIR)/promviz ./cmd/promviz/main.go
+	$(BUILD_ENV) $(GO_ENV) go build $(BUILD_OPTS) -o $(BUILD_DIR)/$(NAME) ./cmd/promviz/main.go
