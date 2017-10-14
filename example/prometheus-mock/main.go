@@ -196,11 +196,24 @@ func initilizeServices() {
 }
 
 func updateData() {
-	fmt.Println("update data")
+	fmt.Println("update metrics")
 
+	index := 0
 	for _, s := range httpServices {
-		total := 20*rand.Float64() + 80
-		generateHttpMetric(s.FullName(), total, 0.01)
+		num := 100.0
+		errRate := 0.0
+		if index == 0 {
+			errRate = 0.0125
+			num = 500.0
+		}
+		if index == 4 {
+			errRate = 0.00002
+			num = 300.0
+		}
+		index++
+
+		total := num*rand.Float64() + num
+		generateHttpMetric(s.FullName(), total, errRate)
 
 		for _, cs := range s.ConnectedServices {
 			switch cs.Type {
@@ -210,7 +223,7 @@ func updateData() {
 
 			case ST_REDIS:
 				total = 10*rand.Float64() + 40
-				generateRedisMetric(s.FullName(), cs.FullName(), total, 0.01)
+				generateRedisMetric(s.FullName(), cs.FullName(), total, 0.0)
 
 			case ST_MONGODB:
 				total = 10*rand.Float64() + 40
@@ -219,6 +232,7 @@ func updateData() {
 		}
 	}
 
+	index = 0
 	for _, s := range grpcServices {
 		for _, cs := range s.ConnectedServices {
 			switch cs.Type {
@@ -227,8 +241,14 @@ func updateData() {
 				generateGrpcMetric(cs.FullName(), s.FullName(), total, 0.01)
 
 			case ST_REDIS:
+				errRate := 0.0
+				if index == 0 {
+					errRate = 0.0125
+				}
+				index++
+
 				total := 10*rand.Float64() + 40
-				generateRedisMetric(s.FullName(), cs.FullName(), total, 0.01)
+				generateRedisMetric(s.FullName(), cs.FullName(), total, errRate)
 
 			case ST_MONGODB:
 				total := 10*rand.Float64() + 40
@@ -308,8 +328,8 @@ var (
 func generateHttpMetric(service string, total float64, errrate float64) {
 	rps500 := total * errrate
 	rps200 := (total - rps500) * 0.9
-	rps401 := (total - rps500) * 0.09
-	rps305 := (total - rps500) * 0.01
+	rps401 := (total - rps500) * 0.01
+	rps305 := (total - rps500) * 0.09
 
 	httpGauge.WithLabelValues(service, "200").Set(rps200)
 	httpGauge.WithLabelValues(service, "500").Set(rps500)
