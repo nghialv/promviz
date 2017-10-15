@@ -23,7 +23,7 @@ helm install --name promviz-front ./helm/promviz-front
 Docker images of both `promviz` and `promviz-front` are avaiable on Docker Hub.
 
 - [nghialv2607/promviz](https://hub.docker.com/r/nghialv2607/promviz)
-- [mjhd-devlion/promviz-front](https://hub.docker.com/r/mjhd-devlion/promviz-front)
+- [mjhddevlion/promviz-front](https://hub.docker.com/r/mjhddevlion/promviz-front)
 
 ## Example
 
