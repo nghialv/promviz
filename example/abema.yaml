@@ -52,6 +52,13 @@ clusterLevel:
           label: status
           warningRegex: ^4..$
           dangerRegex: ^5..$
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: 0.00001
+              error: 0.002
       - name: nginx
         query: status:nginx_http_requests_total:rate2m
         prometheusURL: http://10.83.254.213:9090
@@ -66,6 +73,13 @@ clusterLevel:
           label: status
           warningRegex: ^4..$
           dangerRegex: ^5..$
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: 0.00001
+              error: 0.002
       - name: grpc
         query: client_code:grpc_server_requests_total:rate2m{client_host_service!=""}
         prometheusURL: http://10.83.253.14:9090
@@ -80,6 +94,13 @@ clusterLevel:
           label: code
           dangerRegex: Internal
           warningRegex: Unavailable|DataLoss
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: 0.00001
+              error: 0.002
       - name: redis
         query: status:abema_redis_client_cmds_total:rate2m / 10
         prometheusURL: http://10.83.255.126:9090
@@ -93,6 +114,13 @@ clusterLevel:
         status:
           label: status
           dangerRegex: failed
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: 0.00001
+              error: 0.002
       - name: mongodb
         query: client:abema_mongodb_sent_ops_total:rate2m
         prometheusURL: http://10.83.255.126:9090
@@ -103,6 +131,13 @@ clusterLevel:
         target:
           label: client
           class: mongodb
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: 0.00001
+              error: 0.002
       - name: glasgow
         query: status:abema_glasgow_client_requests_total:rate2m
         prometheusURL: http://10.83.255.126:9090
@@ -116,6 +151,13 @@ clusterLevel:
         status:
           label: status
           dangerRegex: failed
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: 0.00001
+              error: 0.002
       - name: gcs
         query: status:abema_gcs_client_requests_total:rate2m
         prometheusURL: http://10.83.255.126:9090
@@ -129,6 +171,13 @@ clusterLevel:
         status:
           label: status
           dangerRegex: ErrUnknown|failed
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: 0.00001
+              error: 0.002
       - name: pubsub
         query: service:abema_pubsub_publisher_sent_total:rate2m / 15
         prometheusURL: http://10.83.255.126:9090
@@ -139,6 +188,13 @@ clusterLevel:
         target:
           replacement: PUBSUB
           class: gcp
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: 0.00001
+              error: 0.002
     serviceNotices:
       - name: HttpHighErrorRate
         title: "[{{ .value }}] HighErrorRate {{ .handler }}"
@@ -156,7 +212,7 @@ clusterLevel:
         severityThreshold:
           warning: 0.00001
           error: 0.002
-        query: sum by (client) (status:abema_redis_client_cmds_total:rate2m{status="redis_nil"}) > 0
+        query: sum by (client) (status:abema_redis_client_cmds_total:rate2m{status="failed"}) > 0
         prometheusURL: http://10.83.255.126:9090
         node:
           label: client
