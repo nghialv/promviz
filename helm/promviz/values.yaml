@@ -5,18 +5,15 @@ fullnameOverride: {}
 ## Labeling the environment for pod, deployment, service
 environment: {}
 
-## Number of replicas desired
-replicaCount: 1
-
-## Storage-class and size for local storage
-storage:
-  class: standard
-  size: 5Gi
-
-##
 service:
   externalPort: 9091
   internalPort: 9091
+
+replicaCount: 1
+
+storage:
+  class: standard
+  size: 5Gi
 
 ## Configurations for promviz container
 promviz:
@@ -55,5 +52,6 @@ reloader:
       cpu: 20m
       memory: 32Mi
 
+## Contents of config file of promviz
 promvizConfig:
   graphName: promviz

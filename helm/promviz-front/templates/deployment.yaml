@@ -3,10 +3,13 @@ kind: Deployment
 metadata:
   name: {{ template "fullname" . }}
   labels:
-    app: {{ template "name" . }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ template "name" . }}
+    release: {{ .Release.Name }}
+  {{- if .Values.environment }}
+    environment: {{ .Values.environment }}
+  {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
   template:
@@ -14,6 +17,9 @@ spec:
       labels:
         app: {{ template "name" . }}
         release: {{ .Release.Name }}
+      {{- if .Values.environment }}
+        environment: {{ .Values.environment }}
+      {{- end }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -21,17 +27,5 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
-          livenessProbe:
-            httpGet:
-              path: /
-              port: {{ .Values.service.internalPort }}
-          readinessProbe:
-            httpGet:
-              path: /
-              port: {{ .Values.service.internalPort }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-    {{- if .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
-    {{- end }}
