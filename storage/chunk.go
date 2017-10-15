@@ -8,8 +8,7 @@ import (
 	"github.com/nghialv/promviz/model"
 )
 
-// TODO: maybe this should be 5 minute
-const ChunkLength = 30 * time.Second
+const ChunkLength = 5 * time.Minute
 
 var ErrAddToCompletedChunk = errors.New("Unabled to add a new snapshot into a completed chunk")
 

@@ -109,6 +109,9 @@ func (h *handler) Run(g prometheus.Gatherer) error {
 	mux.HandleFunc("/graph", h.getGraphHandler)
 	mux.HandleFunc("/reload", h.reloadHandler)
 	mux.Handle("/metrics", promhttp.HandlerFor(g, promhttp.HandlerOpts{}))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Alive"))
+	})
 
 	return http.ListenAndServe(addr, c.Handler(mux))
 }

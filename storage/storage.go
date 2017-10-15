@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const chunkBlockLength = 2 * time.Minute // 5 * time.Hour
+const chunkBlockLength = time.Hour
 
 var (
 	namespace = "promviz"
@@ -187,7 +187,7 @@ func (s *storage) GetLatestSnapshot() (snapshot *model.Snapshot, err error) {
 }
 
 func (s *storage) Run() {
-	ticker := time.NewTicker(time.Minute) // TODO: move this to config
+	ticker := time.NewTicker(30 * time.Minute)
 	defer func() {
 		ticker.Stop()
 		close(s.doneCh)

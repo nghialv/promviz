@@ -64,7 +64,7 @@ func main() {
 		Default("/promviz").StringVar(&cfg.storagePath)
 
 	a.Flag("storage.retention", "How long to retain graph data in the storage.").
-		Default("24h").DurationVar(&cfg.storage.Retention)
+		Default("168h").DurationVar(&cfg.storage.Retention)
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {

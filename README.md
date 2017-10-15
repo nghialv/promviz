@@ -53,13 +53,6 @@ Then checkout each service at:
 
 Please feel free to create an issue or pull request.
 
-## TODO
+## LICENSE
 
-- [x] Auto generate notice link to prometheus query
-- [x] metrics: storage, retrieval
-- [x] cmd/k8s-config-reloader
-- [x] configurable the color of normal class
-- [x] templating notices
-- [ ] helm chart
-- [ ] cmd/config-validator
-- [ ] tests
+Promviz is released under the MIT license. See LICENSE file for details.
