@@ -43,13 +43,13 @@ docker-compose -f full-compose.yaml up --build
 
 Then checkout each service at:
 - promviz-front: [http://localhost:8080/graph](http://localhost:8080/)
-- promviz: [http://localhost:8000/graph](http://localhost:8000/graph)
+- promviz: [http://localhost:9091/graph](http://localhost:9091/graph)
 - prometheus: [http://localhost:9090/graph](http://localhost:9090/graph)
 - mock-metric: [http://localhost:30001/metrics](http://localhost:30001/metrics)
 
 ## Configuration
 
-See [configuration.md](https://github.com/nghialv/promviz/blob/master/documentation/configuration.md) in `documentation` directory.
+See [configuration.md](https://github.com/nghialv/promviz/blob/master/documentation/configuration.md) in documentation directory.
 
 ## Contributing
 
