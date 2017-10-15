@@ -49,7 +49,7 @@ Then checkout each service at:
 
 ## Configuration
 
-See `configuration.md` in `documentation` directory.
+See [configuration.md](https://github.com/nghialv/promviz/blob/master/documentation/configuration.md) in `documentation` directory.
 
 ## Contributing
 
