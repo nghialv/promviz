@@ -29,7 +29,7 @@ spec:
           image: {{ .Values.promviz.image.repository }}:{{ .Values.promviz.image.tag }}
           imagePullPolicy: {{ .Values.promviz.image.pullPolicy }}
           args:
-            - --config.file=/etc/promviz/config/promviz.yaml
+            - --config.file=/etc/promviz/promviz.yaml
             - --log.level=info
             - --storage.path=/var/promviz/data
             - --storage.retention=24h
@@ -37,8 +37,6 @@ spec:
             - --retrieval.scrape-interval=10s
             - --retrieval.scrape-timeout=8s
             - --api.listen-address=":9091"
-            - --metric.listen-address=":9092"
-            - --metric.path="/metrics"
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
@@ -59,7 +57,7 @@ spec:
           image: {{ .Values.reloader.image.repository }}:{{ .Values.reloader.image.tag }}
           imagePullPolicy: {{ .Values.reloader.image.pullPolicy }}
           args:
-            - --config.promviz-reload-url=http://localhost:9090/-/reload
+            - --config.promviz-reload-url=http://localhost:9091/reload
             - --config.promviz-config-dir=/etc/promviz/config
             - --config.log-level=info
           resources:

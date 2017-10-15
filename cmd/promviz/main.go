@@ -48,11 +48,8 @@ func main() {
 	a.Flag("log.level", "The level of logging.").
 		Default("info").StringVar(&cfg.logLevel)
 
-	a.Flag("storage.path", "Base path for graph data storage.").
-		Default("/promviz").StringVar(&cfg.storagePath)
-
-	a.Flag("api.listen-address", "Address to listen on for API requests.").
-		Default(":9091").StringVar(&cfg.api.ListenAddress)
+	a.Flag("api.port", "Port to listen on for API requests.").
+		Default("9091").IntVar(&cfg.api.ListenPort)
 
 	a.Flag("retrieval.scrape-interval", "How frequently to scrape metrics from prometheuses.").
 		Default("10s").DurationVar(&cfg.retrieval.ScrapeInterval)
@@ -62,6 +59,9 @@ func main() {
 
 	a.Flag("cache.size", "The maximum number of snapshots can be cached.").
 		Default("100").IntVar(&cfg.cache.Size)
+
+	a.Flag("storage.path", "Base path for graph data storage.").
+		Default("/promviz").StringVar(&cfg.storagePath)
 
 	a.Flag("storage.retention", "How long to retain graph data in the storage.").
 		Default("24h").DurationVar(&cfg.storage.Retention)

@@ -27,9 +27,9 @@ type Handler interface {
 }
 
 type Options struct {
-	ListenAddress string
-	Cache         cache.Cache
-	Querier       storage.Querier
+	ListenPort int
+	Cache      cache.Cache
+	Querier    storage.Querier
 }
 
 type apiMetrics struct {
@@ -98,7 +98,8 @@ func NewHandler(logger *zap.Logger, r prometheus.Registerer, opts *Options) Hand
 }
 
 func (h *handler) Run(g prometheus.Gatherer) error {
-	h.logger.Info("Start listening for incoming connections", zap.String("address", h.options.ListenAddress))
+	addr := fmt.Sprintf(":%d", h.options.ListenPort)
+	h.logger.Info("Start listening for incoming connections", zap.String("address", addr))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -109,7 +110,7 @@ func (h *handler) Run(g prometheus.Gatherer) error {
 	mux.HandleFunc("/reload", h.reloadHandler)
 	mux.Handle("/metrics", promhttp.HandlerFor(g, promhttp.HandlerOpts{}))
 
-	return http.ListenAndServe(h.options.ListenAddress, c.Handler(mux))
+	return http.ListenAndServe(addr, c.Handler(mux))
 }
 
 func (h *handler) Reload() <-chan chan error {
