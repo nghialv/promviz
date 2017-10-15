@@ -24,5 +24,7 @@ services:
     image: mjhddevlion/promviz-front
     ports:
       - 8080:8080
-    volumes:
-      - ./front.env:/usr/src/app/.env
+    environment:
+      - UPDATE_URL=http://localhost:8000/graph
+      - INTERVAL=10000
+      - MAX_REPLAY_OFFSET=43200
