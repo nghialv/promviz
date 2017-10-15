@@ -49,6 +49,8 @@ Then checkout each service at:
 
 ## Configuration
 
+See `configuration.md` in `documentation` directory.
+
 ## Contributing
 
 Please feel free to create an issue or pull request.
