@@ -19,8 +19,8 @@ services:
       - 8000:9091
     volumes:
       - ./full.yaml:/etc/promviz/promviz.yaml
-  # promviz-front:
-  #   container_name: promviz-front
-  #   image: nghialv2607/promviz-front
-  #   ports:
-  #     - 8080:8080
+  promviz-front:
+    container_name: promviz-front
+    image: nghialv2607/promviz-front
+    ports:
+      - 8080:8080

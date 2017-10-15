@@ -8,31 +8,52 @@ environment: {}
 ## Number of replicas desired
 replicaCount: 1
 
+## Storage-class and size for local storage
+storage:
+  class: standard
+  size: 5Gi
+
+##
+service:
+  externalPort: 9091
+  internalPort: 9091
+
+## Configurations for promviz container
 promviz:
   image:
     repository: nghialv2607/promviz
     tag: v0.1.0
     pullPolicy: IfNotPresent
-  config:
-    storage:
-      retention: 24h
-    cache:
-      size: 100
-    retrieval:
+  log:
+    level: info
+  storage:
+    retention: 24h
+  cache:
+    size: 100
+  retrieval:
       scrapeInterval: 10s
       scrapeTimeout: 8s
-  resources: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
+## Configurations for reloader container
 reloader:
   image:
     repository: nghialv2607/config-reloader-k8s
     tag: v0.1.0
     pullPolicy: IfNotPresent
-  resources: {}
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 20m
+      memory: 32Mi
 
-## StorageSpec for persistent data
-storage: {}
-
-service:
-  externalPort: 8080
-  internalPort: 8080
+promvizConfig:
+  graphName: promviz

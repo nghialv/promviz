@@ -1,5 +1,5 @@
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: apps/v1beta1
+kind: StatefulSet
 metadata:
   name: {{ template "fullname" . }}
   labels:
@@ -12,9 +12,7 @@ metadata:
   {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
-  revisionHistoryLimit: 3
-  strategy:
-    type: RollingUpdate
+  serviceName: promviz
   template:
     metadata:
       labels:
@@ -30,13 +28,13 @@ spec:
           imagePullPolicy: {{ .Values.promviz.image.pullPolicy }}
           args:
             - --config.file=/etc/promviz/promviz.yaml
-            - --log.level=info
+            - --log.level={{ .Values.promviz.log.level }}
             - --storage.path=/var/promviz/data
-            - --storage.retention=24h
-            - --cache.size=100
-            - --retrieval.scrape-interval=10s
-            - --retrieval.scrape-timeout=8s
-            - --api.listen-address=":9091"
+            - --storage.retention={{ .Values.promviz.storage.retention }}
+            - --cache.size={{ .Values.promviz.cache.size }}
+            - --retrieval.scrape-interval={{ .Values.promviz.retrieval.scrapeInterval }}
+            - --retrieval.scrape-timeout={{ .Values.promviz.retrieval.scapeTimeout }}
+            - --api.port={{ .Values.service.internalPort }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
@@ -53,12 +51,36 @@ spec:
             timeoutSeconds: 30
           resources:
 {{ toYaml .Values.promviz.resources | indent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/promviz
+            - name: promviz-db
+              mountPath: /var/promviz/data
+              subPath: promviz-db
         - name: reloader
           image: {{ .Values.reloader.image.repository }}:{{ .Values.reloader.image.tag }}
           imagePullPolicy: {{ .Values.reloader.image.pullPolicy }}
           args:
             - --config.promviz-reload-url=http://localhost:9091/reload
-            - --config.promviz-config-dir=/etc/promviz/config
+            - --config.promviz-config-dir=/etc/promviz
             - --config.log-level=info
           resources:
 {{ toYaml .Values.reloader.resources | indent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/promviz
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "fullname" . }}-config
+  volumeClaimTemplates:
+  - metadata:
+      annotations:
+        volume.beta.kubernetes.io/storage-class: {{ .Values.storage.class }}
+      name: promviz-db
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: {{ .Values.storage.size }}
