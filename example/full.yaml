@@ -1,0 +1,86 @@
+graphName: Demo
+
+globalLevel:
+  maxVolume: 1200
+  clusterConnections:
+    - query: cluster:http_requests_total:rate2m
+      prometheusURL: http://prometheus:9090
+      source:
+        label: source
+      target:
+        label: target
+      status:
+        label: status
+        warningRegex: ^4..$
+        dangerRegex: ^5..$
+
+clusterLevel:
+  - cluster: demo-cluster-1
+    maxVolume: 40000
+    serviceConnections:
+      - query: status:http_requests_total:rate2m
+        prometheusURL: http://prometheus:9090
+        source:
+          replacement: INTERNET
+        target:
+          label: service
+          class: http-server
+        status:
+          label: status
+          warningRegex: ^4..$
+          dangerRegex: ^5..$
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: 0.00001
+              error: 0.001
+      - query: client_code:grpc_server_requests_total:rate2m{client!=""}
+        prometheusURL: http://prometheus:9090
+        source:
+          label: client
+        target:
+          label: service
+          class: grpc-server
+        status:
+          label: code
+          dangerRegex: Internal
+          warningRegex: Unavailable|DataLoss
+      - query: status:redis_client_cmds_total:rate2m
+        prometheusURL: http://prometheus:9090
+        source:
+          label: service
+        target:
+          label: dbname
+          class: redis
+        status:
+          label: status
+          dangerRegex: failed
+      - query: status:mongodb_client_ops_total:rate2m
+        prometheusURL: http://prometheus:9090
+        source:
+          label: service
+        target:
+          label: dbname
+          class: mongodb
+        status:
+          label: status
+          dangerRegex: failed
+    serviceNotices:
+      - title: "[{{ .value }}] HighErrorRate"
+        query: sum by (dbname) (status:redis_client_cmds_total:rate2m{status="failed"}) / sum by (dbname) (status:redis_client_cmds_total:rate2m)
+        prometheusURL: http://prometheus:9090
+        service:
+          label: dbname
+        severityThreshold:
+          warning: 0.00001
+          error: 0.00002
+
+classes:
+  - name: grpc-server
+    color: rgb(128, 128, 150)
+  - name: redis
+    color: rgb(150, 128, 128)
+  - name: mongodb
+    color: rgb(128, 150, 128)

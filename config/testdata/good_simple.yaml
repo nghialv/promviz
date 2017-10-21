@@ -1,0 +1,38 @@
+graphName: SimpleDemo
+
+globalLevel:
+  maxVolumeRate: 0.67
+  clusterConnections:
+    - name: cluster
+      query: cluster:http_requests_total:rate2m
+      prometheusURL: http://localhost:9090
+      source:
+        label: source
+      target:
+        label: target
+      status:
+        label: status
+        warningRegex: ^4..$
+        dangerRegex: ^5..$
+
+clusterLevel:
+  - cluster: demo-cluster-1
+    maxVolumeRate: 0.04
+    serviceConnections:
+      - name: http
+        query: status:http_requests_total:rate2m
+        prometheusURL: http://localhost:9090
+        source:
+          replacement: INTERNET
+        target:
+          label: service
+        status:
+          label: status
+          warningRegex: ^4..$
+          dangerRegex: ^5..$
+        notices:
+          - name: highErrorRate
+            statusType: danger
+            threshold: 0.01
+            title: HighErrorRate
+            severity: 1

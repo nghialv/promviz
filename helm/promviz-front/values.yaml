@@ -1,0 +1,30 @@
+## By default, fullname will be the string that is associated with .Release.Name and .Chart.Name.
+## But you can override the fullname by specifying this field.
+fullnameOverride: {}
+
+## Labeling the environment for pod, deployment, service
+environment: {}
+
+service:
+  externalPort: 8080
+  internalPort: 8080
+
+replicaCount: 1
+
+env:
+  updateURL: ""
+  interval: "1000"
+  maxReplayOffset: "43200"
+
+image:
+  repository: mjhddevlion/promviz-front
+  tag: v0.1.0
+  pullPolicy: Always
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

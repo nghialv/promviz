@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "fullname" . }}-config
+  labels:
+    heritage: {{ .Release.Service }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ template "name" . }}
+    release: {{ .Release.Name }}
+  {{- if .Values.environment }}
+    environment: {{ .Values.environment }}
+  {{- end }}
+data:
+  promviz.yaml: |-
+{{ toYaml .Values.promvizConfig | indent 4 }}

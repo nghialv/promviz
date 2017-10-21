@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    heritage: {{ .Release.Service }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ template "name" . }}
+    release: {{ .Release.Name }}
+  {{- if .Values.environment }}
+    environment: {{ .Values.environment }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+        release: {{ .Release.Name }}
+      {{- if .Values.environment }}
+        environment: {{ .Values.environment }}
+      {{- end }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.internalPort }}
+          env:
+            - name: UPDATE_URL
+              value: {{ .Values.env.updateURL }}
+            - name: INTERVAL
+              value: {{ .Values.env.interval | quote }}
+            - name: MAX_REPLAY_OFFSET
+              value: {{ .Values.env.maxReplayOffset | quote }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}

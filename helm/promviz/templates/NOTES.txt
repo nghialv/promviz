@@ -1,0 +1,3 @@
+1. Get the list of pods by running the following command:
+
+kubectl -n {{ .Release.Namespace }} get pods -l "app={{ template "name" . }},release={{ .Release.Name }}" -o wide

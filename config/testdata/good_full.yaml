@@ -1,0 +1,92 @@
+graphName: Demo
+
+globalLevel:
+  maxVolumeRate: 0.67
+  clusterConnections:
+    - name: cluster
+      query: cluster:http_requests_total:rate2m
+      prometheusURL: http://localhost:9090
+      source:
+        label: source
+      target:
+        label: target
+      status:
+        label: status
+        warningRegex: ^4..$
+        dangerRegex: ^5..$
+
+clusterLevel:
+  - cluster: demo-cluster-1
+    maxVolumeRate: 0.04
+    serviceConnections:
+      - name: http
+        query: status:http_requests_total:rate2m
+        prometheusURL: http://localhost:9090
+        source:
+          replacement: INTERNET
+        target:
+          label: service
+          class: http-server
+        status:
+          label: status
+          warningRegex: ^4..$
+          dangerRegex: ^5..$
+        notices:
+          - name: highErrorRate
+            statusType: danger
+            threshold: 0.01
+            title: HighErrorRate
+            severity: 1
+      - name: grpc
+        query: client_code:grpc_server_requests_total:rate2m{client!=""}
+        prometheusURL: http://localhost:9090
+        source:
+          label: client
+        target:
+          label: service
+          class: grpc-server
+        status:
+          label: code
+          dangerRegex: Internal
+          warningRegex: Unavailable|DataLoss
+      - name: redis
+        query: status:redis_client_cmds_total:rate2m
+        prometheusURL: http://localhost:9090
+        source:
+          label: service
+        target:
+          label: dbname
+          class: redis
+        status:
+          label: status
+          dangerRegex: failed
+      - name: mongodb
+        query: status:mongodb_client_ops_total:rate2m
+        prometheusURL: http://localhost:9090
+        source:
+          label: service
+        target:
+          label: dbname
+          class: mongodb
+        status:
+          label: status
+          dangerRegex: failed
+    serviceNotices:
+      - name: RedisHighErrorRate
+        title: High error rate
+        severity: 1
+        link: http://localhost:9090
+        query: sum by (dbname)(status:redis_client_cmds_total:rate2m{status="redis_nil"}) > 0
+        prometheusURL: http://localhost:9090
+        node:
+          label: dbname
+
+classes:
+  - name: http-server
+    color: rgb(128, 128, 150)
+  - name: grpc-server
+    color: rgb(128, 150, 128)
+  - name: redis
+    color: rgb(150, 128, 128)
+  - name: mongodb
+    color: rgb(128, 128, 128)

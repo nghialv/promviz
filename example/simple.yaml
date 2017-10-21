@@ -1,0 +1,30 @@
+graphName: SimpleDemo
+
+globalLevel:
+  maxVolume: 1200
+  clusterConnections:
+    - query: cluster:http_requests_total:rate2m
+      prometheusURL: http://prometheus:9090
+      source:
+        label: source
+      target:
+        label: target
+      status:
+        label: status
+        warningRegex: ^4..$
+        dangerRegex: ^5..$
+
+clusterLevel:
+  - cluster: demo-cluster-1
+    maxVolume: 40000
+    serviceConnections:
+      - query: status:http_requests_total:rate2m
+        prometheusURL: http://prometheus:9090
+        source:
+          replacement: INTERNET
+        target:
+          label: service
+        status:
+          label: status
+          warningRegex: ^4..$
+          dangerRegex: ^5..$
