@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: circleci/golang:1.8
         environment:
-          DOCKER_IMAGE_NAME: nghialv/promviz
+          DOCKER_IMAGE_NAME: nghialv2607/promviz
 
     working_directory: /go/src/github.com/nghialv/promviz
     steps:
