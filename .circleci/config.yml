@@ -3,8 +3,24 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.8
+        environment:
+          DOCKER_IMAGE_NAME: nghialv/promviz
 
     working_directory: /go/src/github.com/nghialv/promviz
     steps:
       - checkout
       - run: make test
+      - run: make build
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: |
+          if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            docker build -t $DOCKER_IMAGE_NAME .
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push $DOCKER_IMAGE_NAME
+          fi
+          if [[ "$CIRCLE_TAG" =~ ^v[0-9]+(?:\.[0-9]+){2}$ ]]; then
+            docker build -t "$DOCKER_IMAGE_NAME:$CIRCLE_TAG" .
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push "$DOCKER_IMAGE_NAME:$CIRCLE_TAG"
+          fi

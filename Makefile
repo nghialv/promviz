@@ -15,7 +15,6 @@ build: BUILD_ENV ?= GOOS=linux GOARCH=amd64
 build:
 	$(BUILD_ENV) $(GO_ENV) go build $(BUILD_OPTS) -o $(BUILD_DIR)/$(NAME) ./cmd/promviz/main.go
 
-
 PHONY: test
 test:
 	$(GO_ENV) go  test $(GO_PKGS)
