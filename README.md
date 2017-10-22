@@ -1,5 +1,5 @@
 # Promviz
-[![CircleCI](https://circleci.com/gh/nghialv/promviz/tree/master.svg?style=shield)][circleci]
+[![CircleCI](https://circleci.com/gh/nghialv/promviz.svg?style=svg)](https://circleci.com/gh/nghialv/promviz)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
 
 Promviz is an application that helps you visualize the traffic of your cluster from Prometheus data.
