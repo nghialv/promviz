@@ -6,7 +6,7 @@ It has 2 components:
 
 - Promviz: retrieves data from Prometheus servers, aggregates them and provides an API to get the graph data.
   
-- [Promviz-front](https://github.com/mjhd-devlion/promviz-front): based on Netfix's [vizceral](https://github.com/Netflix/vizceral) to render traffic graph.
+- [Promviz-front](https://github.com/mjhd-devlion/promviz-front): based on Netflix's [vizceral](https://github.com/Netflix/vizceral) to render traffic graph.
 
 #### Features:
 - Generates and renders traffic graph in realtime
