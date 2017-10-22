@@ -1,11 +1,13 @@
-# Promviz [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
+# Promviz
+[![CircleCI](https://circleci.com/gh/nghialv/promviz/tree/master.svg?style=shield)][circleci]
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
 
 Promviz is an application that helps you visualize the traffic of your cluster from Prometheus data.
 
 It has 2 components:
 
 - Promviz: retrieves data from Prometheus servers, aggregates them and provides an API to get the graph data.
-  
+
 - [Promviz-front](https://github.com/mjhd-devlion/promviz-front): based on Netflix's [vizceral](https://github.com/Netflix/vizceral) to render traffic graph.
 
 #### Features:
