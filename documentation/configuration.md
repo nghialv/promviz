@@ -30,12 +30,12 @@ Let's see how it works.
 Suppose we have the following metrics on a prometheus server.
 
 ```
-code:grpc_server_requests_total:rate2m{client="demo-s1",service="demo-s3",code="OK"} 10
-code:grpc_server_requests_total:rate2m{client="demo-s1",service="demo-s3",code="Internal"} 1
-code:grpc_server_requests_total:rate2m{client="demo-s1",service="demo-s3",code="NotFound"} 1
-code:grpc_server_requests_total:rate2m{client="demo-s1",service="demo-s3",code="InvalidArgument"} 2
-code:grpc_server_requests_total:rate2m{client="demo-s2",service="demo-s3",code="OK"} 20
-code:grpc_server_requests_total:rate2m{client="demo-s2",service="demo-s3",code="Internal"} 5
+code:grpc_server_requests_total:rate2m{client="demo-s1",service="demo-s3",code="OK",foo="foovalue"} 10
+code:grpc_server_requests_total:rate2m{client="demo-s1",service="demo-s3",code="Internal",foo="anything"} 1
+code:grpc_server_requests_total:rate2m{client="demo-s1",service="demo-s3",code="NotFound",foo="bar"} 1
+code:grpc_server_requests_total:rate2m{client="demo-s1",service="demo-s3",code="InvalidArgument",foo="test"} 2
+code:grpc_server_requests_total:rate2m{client="demo-s2",service="demo-s3",code="OK",foo=""} 20
+code:grpc_server_requests_total:rate2m{client="demo-s2",service="demo-s3",code="Internal",foo=""} 5
 ```
 
 - example 1: Use the label value as the node name.
