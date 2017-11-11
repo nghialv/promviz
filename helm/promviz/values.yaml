@@ -41,7 +41,7 @@ promviz:
 ## Configurations for reloader container
 reloader:
   image:
-    repository: nghialv2607/config-reloader-k8s
+    repository: nghialv2607/k8s-config-reloader
     tag: v0.1.0
     pullPolicy: IfNotPresent
   resources:
