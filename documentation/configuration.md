@@ -1,21 +1,21 @@
-Promviz is configured via command-line flags and a configuration file.
+Vistio is configured via command-line flags and a configuration file.
 
 ### Command-line flags
 
-- `--config.file` Promviz configuration file path. Default is `/etc/promviz/promviz.yaml`.
+- `--config.file` Vistio configuration file path. Default is `/etc/vistio/vistio.yaml`.
 - `--log.level` The level of logging. Default is `info`.
 - `--api.port` Port to listen on for API requests. Default is `9091`.
 - `--retrieval.scrape-interval` How frequently to scrape metrics from prometheus servers. Default is `10s`.
 - `--retrieval.scrape-timeout` How long until a scrape request times out. Default is `8s`.
 - `--cache.size` The maximum number of snapshots can be cached. Default is `100`.
-- `--storage.path` Base path of local storage for graph data. Default is `/promviz`.
+- `--storage.path` Base path of local storage for graph data. Default is `/vistio`.
 - `--storage.retention` How long to retain graph data in the storage. Default is `168h`.
 
 ### Configuration file
 
-This file contains configuration information for the traffic graph. Promviz reads this file to know where to send prometheus query and how to generate graph data from that query results.
+This file contains configuration information for the traffic graph. Vistio reads this file to know where to send prometheus query and how to generate graph data from that query results.
 
-Some valid example files are placed in `example` directory ([simple.yaml](https://github.com/nghialv/promviz/blob/master/example/simple.yaml), [full.yaml](https://github.com/nghialv/promviz/blob/master/example/simple.yaml)).
+Some valid example files are placed in `example` directory ([simple.yaml](https://github.com/nmnellis/vistio/blob/master/example/simple.yaml), [full.yaml](https://github.com/nmnellis/vistio/blob/master/example/simple.yaml)).
 
 #### Graph data
 
@@ -23,7 +23,7 @@ Basically, a graph contains a list of nodes and connections. And we have 2 graph
  - global level: contains `cluster` nodes and connections between those nodes
  - cluster level: contains `service` nodes and connections between those nodes.
 
-Promviz will send the specified queries to Prometheus servers and generates nodes and connections.
+Vistio will send the specified queries to Prometheus servers and generates nodes and connections.
 
 Let's see how it works.
 

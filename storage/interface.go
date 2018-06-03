@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/nghialv/promviz/model"
+	"github.com/nmnellis/vistio/model"
 )
 
 type Storage interface {

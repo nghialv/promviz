@@ -12,13 +12,13 @@ services:
       - 9090:9090
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-  promviz:
-    container_name: promviz
-    image: nghialv2607/promviz:v0.1.0
+  vistio:
+    container_name: vistio
+    image: nghialv2607/vistio:v0.1.0
     ports:
       - 9091:9091
     volumes:
-      - ./simple.yaml:/etc/promviz/promviz.yaml
+      - ./simple.yaml:/etc/vistio/vistio.yaml
   promviz-front:
     container_name: promviz-front
     image: mjhddevlion/promviz-front:v0.1.0

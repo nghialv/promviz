@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/nghialv/promviz/model"
+	"github.com/nmnellis/vistio/model"
 )
 
 const ChunkLength = 5 * time.Minute

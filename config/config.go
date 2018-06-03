@@ -27,7 +27,7 @@ func LoadFile(path string) (*Config, error) {
 
 var (
 	DefaultConfig = Config{
-		GraphName: "promviz",
+		GraphName: "vistio",
 	}
 
 	DefaultNodeMapping = NodeMapping{
