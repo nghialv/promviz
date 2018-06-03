@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/nghialv/promviz/api"
-	"github.com/nghialv/promviz/cache"
-	"github.com/nghialv/promviz/config"
-	"github.com/nghialv/promviz/retrieval"
-	"github.com/nghialv/promviz/storage"
-	"github.com/nghialv/promviz/version"
+	"github.com/nmnellis/vistio/api"
+	"github.com/nmnellis/vistio/cache"
+	"github.com/nmnellis/vistio/config"
+	"github.com/nmnellis/vistio/retrieval"
+	"github.com/nmnellis/vistio/storage"
+	"github.com/nmnellis/vistio/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -20,7 +20,7 @@ import (
 
 var (
 	configSuccess = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "promviz",
+		Namespace: "vistio",
 		Name:      "config_last_reload_successful",
 		Help:      "Whether the last configuration reload attempt was successful.",
 	})
@@ -38,12 +38,12 @@ func main() {
 		storage   storage.Options
 	}{}
 
-	a := kingpin.New(filepath.Base(os.Args[0]), "The Promviz server")
+	a := kingpin.New(filepath.Base(os.Args[0]), "The Vistio server")
 	a.Version(version.Version)
 	a.HelpFlag.Short('h')
 
-	a.Flag("config.file", "Promviz configuration file path.").
-		Default("/etc/promviz/promviz.yaml").StringVar(&cfg.configFile)
+	a.Flag("config.file", "Vistio configuration file path.").
+		Default("/etc/vistio/vistio.yaml").StringVar(&cfg.configFile)
 
 	a.Flag("log.level", "The level of logging.").
 		Default("info").StringVar(&cfg.logLevel)
@@ -61,7 +61,7 @@ func main() {
 		Default("100").IntVar(&cfg.cache.Size)
 
 	a.Flag("storage.path", "Base path of local storage for graph data.").
-		Default("/promviz").StringVar(&cfg.storagePath)
+		Default("/vistio").StringVar(&cfg.storagePath)
 
 	a.Flag("storage.retention", "How long to retain graph data in the storage.").
 		Default("168h").DurationVar(&cfg.storage.Retention)
@@ -135,7 +135,7 @@ func main() {
 		&cfg.api,
 	)
 
-	logger.Info("Starting promviz", zap.String("info", version.String()))
+	logger.Info("Starting vistio", zap.String("info", version.String()))
 	errCh := make(chan error)
 
 	go func() {

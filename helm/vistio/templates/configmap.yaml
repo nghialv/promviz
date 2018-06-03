@@ -11,5 +11,5 @@ metadata:
     environment: {{ .Values.environment }}
   {{- end }}
 data:
-  promviz.yaml: |-
-{{ toYaml .Values.promvizConfig | indent 4 }}
+  vistio.yaml: |-
+{{ toYaml .Values.vistioConfig | indent 4 }}

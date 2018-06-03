@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nghialv/promviz/config"
+	"github.com/nmnellis/vistio/config"
 	"github.com/prometheus/client_golang/api/prometheus"
 	prommodel "github.com/prometheus/common/model"
 	"go.uber.org/zap"

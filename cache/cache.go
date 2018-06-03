@@ -5,13 +5,13 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/nghialv/promviz/storage"
+	"github.com/nmnellis/vistio/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
 
 var (
-	namespace = "promviz"
+	namespace = "vistio"
 	subsystem = "cache"
 )
 

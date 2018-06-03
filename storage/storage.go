@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nghialv/promviz/model"
+	"github.com/nmnellis/vistio/model"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
@@ -20,7 +20,7 @@ import (
 const chunkBlockLength = time.Hour
 
 var (
-	namespace = "promviz"
+	namespace = "vistio"
 	subsystem = "storage"
 
 	ErrNotFound = errors.New("Not found")

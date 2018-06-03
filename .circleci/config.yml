@@ -4,9 +4,9 @@ jobs:
     docker:
       - image: circleci/golang:1.8
         environment:
-          DOCKER_IMAGE_NAME: nghialv2607/promviz
+          DOCKER_IMAGE_NAME: nmnellis/vistio
 
-    working_directory: /go/src/github.com/nghialv/promviz
+    working_directory: /go/src/github.com/nmnellis/vistio
     steps:
       - checkout
       - run: make test

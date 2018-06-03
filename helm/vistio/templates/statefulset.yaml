@@ -12,7 +12,7 @@ metadata:
   {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
-  serviceName: promviz
+  serviceName: vistio
   template:
     metadata:
       labels:
@@ -23,17 +23,17 @@ spec:
       {{- end }}
     spec:
       containers:
-        - name: promviz
-          image: {{ .Values.promviz.image.repository }}:{{ .Values.promviz.image.tag }}
-          imagePullPolicy: {{ .Values.promviz.image.pullPolicy }}
+        - name: vistio
+          image: {{ .Values.vistio.image.repository }}:{{ .Values.vistio.image.tag }}
+          imagePullPolicy: {{ .Values.vistio.image.pullPolicy }}
           args:
-            - --config.file=/etc/promviz/promviz.yaml
-            - --log.level={{ .Values.promviz.log.level }}
-            - --storage.path=/var/promviz/data
-            - --storage.retention={{ .Values.promviz.storage.retention }}
-            - --cache.size={{ .Values.promviz.cache.size }}
-            - --retrieval.scrape-interval={{ .Values.promviz.retrieval.scrapeInterval }}
-            - --retrieval.scrape-timeout={{ .Values.promviz.retrieval.scrapeTimeout }}
+            - --config.file=/etc/vistio/vistio.yaml
+            - --log.level={{ .Values.vistio.log.level }}
+            - --storage.path=/var/vistio/data
+            - --storage.retention={{ .Values.vistio.storage.retention }}
+            - --cache.size={{ .Values.vistio.cache.size }}
+            - --retrieval.scrape-interval={{ .Values.vistio.retrieval.scrapeInterval }}
+            - --retrieval.scrape-timeout={{ .Values.vistio.retrieval.scrapeTimeout }}
             - --api.port={{ .Values.service.internalPort }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
@@ -50,25 +50,25 @@ spec:
             initialDelaySeconds: 30
             timeoutSeconds: 30
           resources:
-{{ toYaml .Values.promviz.resources | indent 12 }}
+{{ toYaml .Values.vistio.resources | indent 12 }}
           volumeMounts:
             - name: config
-              mountPath: /etc/promviz
-            - name: promviz-db
-              mountPath: /var/promviz/data
-              subPath: promviz-db
+              mountPath: /etc/vistio
+            - name: vistio-db
+              mountPath: /var/vistio/data
+              subPath: vistio-db
         - name: reloader
           image: {{ .Values.reloader.image.repository }}:{{ .Values.reloader.image.tag }}
           imagePullPolicy: {{ .Values.reloader.image.pullPolicy }}
           args:
-            - --config.promviz-reload-url=http://localhost:{{ .Values.service.internalPort }}/reload
-            - --config.promviz-config-dir=/etc/promviz
+            - --config.vistio-reload-url=http://localhost:{{ .Values.service.internalPort }}/reload
+            - --config.vistio-config-dir=/etc/vistio
             - --config.log-level=info
           resources:
 {{ toYaml .Values.reloader.resources | indent 12 }}
           volumeMounts:
             - name: config
-              mountPath: /etc/promviz
+              mountPath: /etc/vistio
       volumes:
         - name: config
           configMap:
@@ -77,7 +77,7 @@ spec:
   - metadata:
       annotations:
         volume.beta.kubernetes.io/storage-class: {{ .Values.storage.class }}
-      name: promviz-db
+      name: vistio-db
     spec:
       accessModes:
       - ReadWriteOnce

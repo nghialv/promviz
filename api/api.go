@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/nghialv/promviz/cache"
-	"github.com/nghialv/promviz/model"
-	"github.com/nghialv/promviz/storage"
+	"github.com/nmnellis/vistio/cache"
+	"github.com/nmnellis/vistio/model"
+	"github.com/nmnellis/vistio/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	namespace = "promviz"
+	namespace = "vistio"
 	subsystem = "api"
 )
 

@@ -15,10 +15,10 @@ storage:
   class: standard
   size: 5Gi
 
-## Configurations for promviz container
-promviz:
+## Configurations for vistio container
+vistio:
   image:
-    repository: nghialv2607/promviz
+    repository: nmnellis/vistio
     tag: v0.1.0
     pullPolicy: Always
   log:
@@ -52,6 +52,6 @@ reloader:
       cpu: 20m
       memory: 32Mi
 
-## Contents of config file of promviz
-promvizConfig:
-  graphName: promviz
+## Contents of config file of vistio
+vistioConfig:
+  graphName: vistio

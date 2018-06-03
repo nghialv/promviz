@@ -21,23 +21,23 @@ var (
 )
 
 type Config struct {
-	promvizConfigDir string
-	promvizReloadURL string
+	vistioConfigDir string
+	vistioReloadURL string
 	logLevel         string
 }
 
 func main() {
 	cfg := Config{}
 
-	a := kingpin.New(filepath.Base(os.Args[0]), "The promviz config reloader for k8s")
+	a := kingpin.New(filepath.Base(os.Args[0]), "The vistio config reloader for k8s")
 	a.Version(Version)
 	a.HelpFlag.Short('h')
 
-	a.Flag("config.promviz-config-dir", "The directory contains Promviz configuration file.").
-		StringVar(&cfg.promvizConfigDir)
+	a.Flag("config.vistio-config-dir", "The directory contains Vistio configuration file.").
+		StringVar(&cfg.vistioConfigDir)
 
-	a.Flag("config.promviz-reload-url", "The url to send reloading request.").
-		StringVar(&cfg.promvizReloadURL)
+	a.Flag("config.vistio-reload-url", "The url to send reloading request.").
+		StringVar(&cfg.vistioReloadURL)
 
 	a.Flag("config.log-level", "The level of logging.").
 		Default("info").StringVar(&cfg.logLevel)
@@ -106,7 +106,7 @@ func (r *reloader) Run() error {
 	r.logger.Info("Starting reloader...")
 	r.Reload()
 
-	err = watcher.Add(r.cfg.promvizConfigDir)
+	err = watcher.Add(r.cfg.vistioConfigDir)
 	if err != nil {
 		r.logger.Error("Failed to add config volume to be watched", zap.Error(err))
 		return err
@@ -138,21 +138,21 @@ func (r *reloader) Stop() {
 func (r *reloader) Reload() {
 	cb := backoff.WithContext(backoff.NewExponentialBackOff(), r.ctx)
 	err := backoff.RetryNotify(r.reload, cb, func(err error, next time.Duration) {
-		r.logger.Warn("Failed to reload promviz configuration",
+		r.logger.Warn("Failed to reload vistio configuration",
 			zap.Error(err),
 			zap.Duration("next retry", next),
 		)
 	})
 
 	if err != nil {
-		r.logger.Error("Failed to reload promviz configuration", zap.Error(err))
+		r.logger.Error("Failed to reload vistio configuration", zap.Error(err))
 	} else {
 		r.logger.Info("Reloaded successfully")
 	}
 }
 
 func (r *reloader) reload() error {
-	req, err := http.NewRequest("POST", r.cfg.promvizReloadURL, nil)
+	req, err := http.NewRequest("POST", r.cfg.vistioReloadURL, nil)
 	if err != nil {
 		return err
 	}

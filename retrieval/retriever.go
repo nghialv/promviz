@@ -7,14 +7,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nghialv/promviz/config"
-	"github.com/nghialv/promviz/storage"
+	"github.com/nmnellis/vistio/config"
+	"github.com/nmnellis/vistio/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
 
 var (
-	namespace = "promviz"
+	namespace = "vistio"
 	subsystem = "retriver"
 
 	ErrConfigNotSet = errors.New("Config has been not set")
