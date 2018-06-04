@@ -162,7 +162,7 @@ func (r *reloader) reload() error {
 	}
 	resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Received response code %s, expected 200", resp.StatusCode)
+		return fmt.Errorf("Received response code %v, expected 200", resp.StatusCode)
 	}
 	return nil
 }
