@@ -1,5 +1,6 @@
 # Vistio [![CircleCI Build Status](https://circleci.com/gh/nmnellis/vistio.svg?style=shield)](https://circleci.com/gh/nmnellis/vistio) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com) [![MIT Licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/nmnellis/vistio/blob/master/LICENSE)
 
+* Forked from - https://github.com/nghialv/promviz and https://github.com/mjhd-devlion/promviz-front 
 
 Vistio is an application that helps you visualize the traffic of your cluster from Prometheus data.
 
@@ -30,15 +31,14 @@ If you are using [Helm](https://helm.sh), the simplest way to install is using t
 
 ```
 helm install --name vistio ./helm/vistio
-helm install --name promviz-front ./helm/promviz-front
 ```
 
 #### Docker images
 
 Docker images of both `vistio` and `promviz-front` are available on Docker Hub.
 
-- [nmnellis/promviz](https://hub.docker.com/r/nmnellis/vistio)
-- [mjhddevlion/promviz-front](https://hub.docker.com/r/mjhddevlion/promviz-front)
+- [nmnellis/vistio](https://hub.docker.com/r/nmnellis/vistio)
+- [nmnellis/vistio-front](https://hub.docker.com/r/mjhddevlion/vistio-front)
 
 ## Example
 

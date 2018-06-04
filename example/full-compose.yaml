@@ -14,7 +14,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
   vistio:
     container_name: vistio
-    image: nmnellis/vistio:v0.1.0
+    image: nmnellis/vistio:latest
     ports:
       - 9091:9091
     volumes:
