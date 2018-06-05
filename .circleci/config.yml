@@ -24,3 +24,9 @@ jobs:
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push "$DOCKER_IMAGE_NAME:$CIRCLE_TAG"
           fi
+
+workflows:
+  version: 2
+  build_project:
+    jobs:
+      - build-api
