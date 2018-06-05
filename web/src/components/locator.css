@@ -1,0 +1,8 @@
+.locator-input {
+  height: 24px;
+  width: 200px;
+  background-color: var(--colorPageBackground);
+  color: var(--colorText);
+  border-color: var(--colorConnectionLine);
+  border-radius: 4px;
+}

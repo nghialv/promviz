@@ -4,9 +4,9 @@ jobs:
     docker:
       - image: circleci/golang:1.10.2
         environment:
-          DOCKER_IMAGE_NAME: nmnellis/vistio
+          DOCKER_IMAGE_NAME: nmnellis/vistio-api
 
-    working_directory: /go/src/github.com/nmnellis/vistio
+    working_directory: /go/src/github.com/nmnellis/vistio/api
     steps:
       - checkout
       - run: make test
@@ -24,9 +24,32 @@ jobs:
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push "$DOCKER_IMAGE_NAME:$CIRCLE_TAG"
           fi
+  build-web:    
+    docker:
+      - image: circleci/node:10.3.1
+        environment:
+          DOCKER_IMAGE_NAME: nmnellis/vistio-web
 
+    working_directory: ~/web
+    steps:
+      - checkout
+      - run: npm install
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: |
+          if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            docker build -t $DOCKER_IMAGE_NAME .
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push $DOCKER_IMAGE_NAME
+          fi
+          if [[ "$CIRCLE_TAG" =~ ^v[0-9]+(?:\.[0-9]+){2}$ ]]; then
+            docker build -t "$DOCKER_IMAGE_NAME:$CIRCLE_TAG" .
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push "$DOCKER_IMAGE_NAME:$CIRCLE_TAG"
+          fi
 workflows:
   version: 2
   build_project:
     jobs:
       - build-api
+      - build-web

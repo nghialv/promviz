@@ -1,0 +1,20 @@
+.selected-formatted-date-time,
+.layout-actions > div {
+  white-space: nowrap;
+}
+.layout-actions > div > label {
+  display: inline-block;
+  width: 160px;
+}
+.layout-link {
+  display: inline-block;
+  line-height: 24px;
+  color: var(--colorNormalDimmed);
+}
+.layout-link {
+  padding-left: 15px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

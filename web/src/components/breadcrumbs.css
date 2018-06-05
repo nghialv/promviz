@@ -1,0 +1,29 @@
+.breadcrumbs ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.breadcrumbs li {
+  color: var(--colorNormal);
+  font-weight: 200;
+  font-size: 20px;
+  display: inline;
+}
+
+.breadcrumbs li:last-of-type {
+  font-weight: 600;
+}
+
+.breadcrumbs li a {
+  color: var(--colorNormal);
+  text-decoration: none;
+}
+
+.breadcrumbs li:after {
+  content: ' / ';
+}
+
+.breadcrumbs li:last-child:after {
+  content: none;
+}

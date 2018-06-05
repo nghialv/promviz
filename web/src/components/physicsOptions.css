@@ -1,0 +1,14 @@
+.physics-options > div {
+  white-space: nowrap;
+  
+}
+.physics-options > div > label {
+  display: inline-block;
+  width: 260px;
+}
+.physics-options > div > input[type=checkbox] {
+  margin-right: 5px;
+}
+.physics-options > div > input[type=number] {
+  width: 60px;
+}

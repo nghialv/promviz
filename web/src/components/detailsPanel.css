@@ -1,0 +1,115 @@
+/* Details Panel
+-------------------------------------------------- */
+.details-panel {
+  background-color: var(--colorDetailsPanel);
+  border: 1px solid var(--colorBorderLines);
+  color: var(--colorWhite);
+  border-radius: 3px;
+  width: 350px;
+  /*height: 100%;*/
+  position: absolute;
+  right: 25px;
+  top: 25px;
+  bottom: 25px;
+}
+
+.details-panel-collapsed {
+  width: 0;
+}
+
+.details-panel-title {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--colorWhite);
+  border-bottom: 1px solid var(--colorBorderLines);
+}
+
+.details-panel-subtitle {
+  margin-left: -10px;
+}
+
+.details-panel-description {
+  padding-top: 5px;
+  padding-bottom: 10px;
+  color: var(--colorWhite);
+}
+
+.details-panel-close {
+  font-family: 'Glyphicons Halflings';  /* essential for enabling glyphicon */
+  content: "\e114";
+  font-size: 12px;
+  position:absolute;
+  top: 6px;
+  right: 10px;
+  padding: 10px 5px 0 10px;
+  cursor: pointer;
+}
+
+.details-panel-subpanel .panel-group .panel {
+  border-left: 0;
+  border-right: 0;
+  color: var(--colorWhite);
+}
+
+.details-panel-subpanel .panel-title {
+  height: 18px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--colorWhite);
+}
+
+.details-panel-subpanel .panel-title .badge {
+  margin-top: -3px;
+  color: var(--colorWhite);
+}
+
+.metric {
+  color: var(--colorWhite);
+}
+
+.metric-title {
+  color: var(--colorWhite);
+}
+
+.metric-query {
+  width: 100%;
+  word-wrap: break-word;
+}
+
+.table-container > .table > thead > tr > th {
+  padding: 0;
+  border-bottom: none;
+}
+
+.connection-list .table-container {
+  max-height: 200px;
+  overflow: auto;
+}
+
+.connection-list .ReactVirtualized__Table__row:focus {
+  outline:0;
+}
+
+.table-header > .table > thead > tr > th {
+  padding: 5px;
+}
+
+.react-bs-container .table-header {
+  height: 30px;
+}
+
+.react-bs-container .table-container > table {
+  margin-top: -25px !important;
+}
+
+.table-container > table > tbody > tr > td {
+  line-height: 20px !important;
+}
+
+.zoom-icon {
+  font-size: 16px;
+  color: var(--colorWhite);
+  padding-left: 5px;
+}

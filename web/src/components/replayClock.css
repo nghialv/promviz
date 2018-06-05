@@ -1,0 +1,65 @@
+.clock .options-link {
+  color: var(--colorNormal);
+}
+
+.clock {
+  margin-left: 20px;
+
+  height: 40px;
+}
+
+.clock .clock-time {
+  font-size: 1em;
+  color: var(--colorNormal);
+  cursor: pointer;
+}
+
+.clock .offset-time-wrap {
+  position: absolute;
+
+  background-color: var(--colorPageBackground);
+  border: 1px solid var(--colorConnectionLine);
+
+  margin-top: 30px;
+  padding: 10px;
+}
+
+.clock .offset-time {
+  font-size: 0.8em;
+  text-align: left;
+
+  height: 20px;
+}
+
+.clock .offset-time .form-control {
+  background-color: var(--colorPageBackground);
+  color: var(--colorNormal);
+  border-color: var(--colorConnectionLine);
+  border-radius: 4px;
+
+  height: 20px;
+}
+
+.clock .offset-time .form-control.error {
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(233, 175, 102, .6);
+}
+
+.clock .offset-time .input-group-btn {
+  height: 20px;
+}
+
+.clock .offset-time .input-group-btn .btn {
+  display: block;
+
+  background-color: var(--colorPageBackground);
+  color: var(--colorNormal);
+  border-color: var(--colorConnectionLine);
+  border-radius: 4px;
+
+  height: 20px;
+  padding: 1px 6px;
+}
+
+.clock small {
+  font-size: 50%;
+}

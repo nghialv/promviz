@@ -6,9 +6,9 @@ Vistio is an application that helps you visualize the traffic of your cluster fr
 
 It has 2 components:
 
-- Vistio: retrieves data from Prometheus servers, aggregates them and provides an API to get the graph data.
+- Vistio API: retrieves data from Prometheus servers, aggregates them and provides an API to get the graph data.
 
-- [Promviz-front](https://github.com/mjhd-devlion/promviz-front): based on Netflix's [vizceral](https://github.com/Netflix/vizceral) to render traffic graph.
+- Forked from [Promviz-front](https://github.com/mjhd-devlion/promviz-front): based on Netflix's [vizceral](https://github.com/Netflix/vizceral) to render traffic graph.
 
 #### Features:
 - Generates and renders traffic graph in realtime
