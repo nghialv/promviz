@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -15,41 +14,90 @@ import (
 )
 
 var (
-	httpGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "status:http_requests_total:rate2m",
-		Help: "Requests per second",
+	numberOfMeshConnections                = 25
+	updateRate               time.Duration = 2    //number of seconds between updates
+	maxRequestsPerSecond                   = 2000 // maximum number of requests per second for an application
+	ingressRequestsPerSecond               = 2000 //number of requests per second per ingress per cluster
+
+	connections = []meshConnection{}
+	gateways    = []ingressGatewayConnection{}
+
+	clusters = []string{
+		"us-east-1",
+		"us-west-2",
+		"ap-southeast-1",
+		"eu-west-1",
+	}
+
+	httpCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "istio_request_count",
+		Help: "Total number of requests",
 	},
-		[]string{"service", "status"},
+		[]string{
+			"source_service",
+			"source_version",
+			"destination_service",
+			"destination_version",
+			"cluster",
+			"response_code",
+		},
 	)
 
-	grpcGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "client_code:grpc_server_requests_total:rate2m",
-		Help: "Requests per second",
-	},
-		[]string{"service", "client", "code"},
-	)
-
-	redisGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "status:redis_client_cmds_total:rate2m",
-		Help: "Requests per second",
-	},
-		[]string{"service", "dbname", "status"},
-	)
-
-	mongodbGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "status:mongodb_client_ops_total:rate2m",
-		Help: "Requests per second",
-	},
-		[]string{"service", "dbname", "status"},
-	)
-
-	clusterGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "cluster:http_requests_total:rate2m",
-		Help: "Requests per second",
-	},
-		[]string{"source", "target", "status"},
-	)
+	httpServiceNames = []service{
+		service{"istio-ingressgateway", []string{"v5"}},
+		service{"parrot", []string{"v5"}},
+		service{"penguin", []string{"v1", "v2"}},
+		service{"toucan", []string{"v1"}},
+		service{"cuckoos", []string{"v3"}},
+		service{"woodpecker", []string{"v1"}},
+		service{"passerine", []string{"v1", "v2"}},
+		service{"albatross", []string{"v1"}},
+		service{"anatidae", []string{"v6"}},
+		service{"gregatidae", []string{"v4", "v5"}},
+		service{"flowl", []string{"v1"}},
+		service{"grouse", []string{"v1"}},
+		service{"kiwis", []string{"v9"}},
+		service{"swift", []string{"v1", "v2"}},
+		service{"ightjar", []string{"v3"}},
+		service{"guineafowl", []string{"v1", "v2"}},
+		service{"turaco", []string{"v1"}},
+		service{"neognathae", []string{"v3", "v4"}},
+		service{"spoonbill", []string{"v11"}},
+		service{"beeeater", []string{"v2"}},
+		service{"shorebirds", []string{"v7", "v8"}},
+	}
 )
+
+type ingressGatewayConnection struct {
+	source             string
+	destination        string
+	requestsPerSeconds int // number of requests per second
+	surge              int // max percent of rate that can change +x%
+	errorRate          int //percent of errors
+	cluster            string
+	total500           float64
+	total200           float64
+	total401           float64
+	total305           float64
+}
+
+type meshConnection struct {
+	sourceIndex        int
+	destinationIndex   int
+	splitPercent       int // 0-100 rps split percent from vx to vy
+	requestsPerSeconds int // number of requests per second
+	surge              int // max percent of rate that can change +x%
+	errorRate          int //percent of errors
+	total500           []float64
+	total200           []float64
+	total401           []float64
+	total305           []float64
+}
+
+type service struct {
+	name     string
+	versions []string
+}
 
 func main() {
 	sigCh := make(chan os.Signal, 1)
@@ -58,11 +106,7 @@ func main() {
 
 	rg := prometheus.NewRegistry()
 	rg.MustRegister(
-		httpGauge,
-		grpcGauge,
-		redisGauge,
-		mongodbGauge,
-		clusterGauge,
+		httpCounter,
 	)
 
 	mux := http.NewServeMux()
@@ -80,10 +124,9 @@ func main() {
 	defer close(doneCh)
 
 	initilizeServices()
-	generateClusterMetric()
 
 	go func() {
-		ticker := time.NewTicker(2 * time.Second)
+		ticker := time.NewTicker(updateRate * time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -106,275 +149,168 @@ func main() {
 }
 
 func initilizeServices() {
-	for _, s := range mongodbServiceNames {
-		mongodbServices = append(mongodbServices, &service{
-			Name: s,
-			Type: ST_MONGODB,
-		})
+
+	// generate mesh connections
+	for i := 0; i < numberOfMeshConnections; i++ {
+		sourceIndex, destinationIndex := generateIndices()
+		errRate := 2 // max 10% error rate
+		rps := rand.Intn(maxRequestsPerSecond)
+		splitPercent := rand.Intn(100)
+		surge := 20 // 20% surge in requests
+
+		connection := meshConnection{
+			sourceIndex:        sourceIndex,
+			destinationIndex:   destinationIndex,
+			errorRate:          errRate,
+			requestsPerSeconds: rps,
+			splitPercent:       splitPercent,
+			surge:              surge,
+			total200:           []float64{0.0, 0.0},
+			total500:           []float64{0.0, 0.0},
+			total401:           []float64{0.0, 0.0},
+			total305:           []float64{0.0, 0.0},
+		}
+		connections = append(connections, connection)
 	}
 
-	for _, s := range redisServiceNames {
-		redisServices = append(redisServices, &service{
-			Name: s,
-			Type: ST_REDIS,
-		})
+	//ingress gateway per cluster
+	for _, c := range clusters {
+		gateway := ingressGatewayConnection{
+			source:             "INTERNET",
+			cluster:            c,
+			destination:        "istio-ingressgateway",
+			requestsPerSeconds: ingressRequestsPerSecond,
+			surge:              20,
+			errorRate:          1,
+			total500:           0.0,
+			total200:           0.0,
+			total401:           0.0,
+			total305:           0.0,
+		}
+		gateways = append(gateways, gateway)
+	}
+}
+
+func generateIndices() (sourceIndex int, destinationIndex int) {
+	sourceIndex = rand.Intn(len(httpServiceNames))
+	destinationIndex = rand.Intn(len(httpServiceNames))
+	if (sourceIndex == destinationIndex) || connectionAlreadyMade(sourceIndex, destinationIndex) {
+		// keep looking for a new index if they are equal or already exist, recursive
+		return generateIndices()
 	}
 
-	for i, s := range httpServiceNames {
-		connectedServices := []*service{}
+	return sourceIndex, destinationIndex
+}
 
-		for _, cs := range grpcServiceNames {
-			if i == 0 || rand.Intn(len(grpcServiceNames)/3) == 0 {
-				connectedServices = append(connectedServices, &service{
-					Name: cs,
-					Type: ST_GRPC,
-				})
-			}
+func connectionAlreadyMade(sourceIndex int, destinationIndex int) bool {
+	for _, c := range connections {
+		if c.sourceIndex == sourceIndex && c.destinationIndex == destinationIndex {
+			return true
 		}
-
-		for _, cs := range mongodbServiceNames {
-			if rand.Intn(3) == 0 {
-				connectedServices = append(connectedServices, &service{
-					Name: cs,
-					Type: ST_MONGODB,
-				})
-			}
-		}
-
-		for _, cs := range redisServiceNames {
-			if rand.Intn(4) == 0 {
-				connectedServices = append(connectedServices, &service{
-					Name: cs,
-					Type: ST_REDIS,
-				})
-			}
-		}
-
-		httpServices = append(httpServices, &service{
-			Name:              s,
-			Type:              ST_HTTP,
-			ConnectedServices: connectedServices,
-		})
 	}
-
-	for _, s := range grpcServiceNames {
-		connectedServices := []*service{}
-
-		for _, cs := range grpcServiceNames {
-			if strings.Compare(s, cs) > 0 && rand.Intn(len(grpcServiceNames)*5/4) == 0 {
-				connectedServices = append(connectedServices, &service{
-					Name: cs,
-					Type: ST_GRPC,
-				})
-			}
-		}
-
-		for _, cs := range mongodbServiceNames {
-			if rand.Intn(3) == 0 {
-				connectedServices = append(connectedServices, &service{
-					Name: cs,
-					Type: ST_MONGODB,
-				})
-			}
-		}
-
-		for _, cs := range redisServiceNames {
-			if rand.Intn(4) == 0 {
-				connectedServices = append(connectedServices, &service{
-					Name: cs,
-					Type: ST_REDIS,
-				})
-			}
-		}
-
-		grpcServices = append(grpcServices, &service{
-			Name:              s,
-			Type:              ST_GRPC,
-			ConnectedServices: connectedServices,
-		})
-	}
+	return false
 }
 
 func updateData() {
 	fmt.Println("update metrics")
 
-	index := 0
-	for _, s := range httpServices {
-		num := 100.0
-		errRate := 0.0
-		if index == 0 {
-			errRate = 0.0125
-			num = 500.0
-		}
-		if index == 4 {
-			errRate = 0.00002
-			num = 300.0
-		}
-		index++
+	for i := 0; i < len(connections); i++ {
+		generateHttpMetric(&connections[i])
 
-		total := num*rand.Float64() + num
-		generateHttpMetric(s.FullName(), total, errRate)
+	}
+	//TODO generate istio-ingressgateway metrics everytime
+	generateIngressHttpMetric()
+}
 
-		for _, cs := range s.ConnectedServices {
-			switch cs.Type {
-			case ST_GRPC:
-				total = 10*rand.Float64() + 40
-				generateGrpcMetric(cs.FullName(), s.FullName(), total, 0.01)
+func generateHttpMetric(connection *meshConnection) {
 
-			case ST_REDIS:
-				total = 10*rand.Float64() + 40
-				generateRedisMetric(s.FullName(), cs.FullName(), total, 0.0)
+	for i := 0; i < len(clusters); i++ {
+		cluster := clusters[i]
+		//we need to generate requests for each cluster. we will randomize for each
+		total := float64(connection.requestsPerSeconds * int(updateRate))
+		// fmt.Println(connection.surge)
+		surgePercent := float64(rand.Intn(connection.surge)) / float64(100)
+		surge := float64(connection.requestsPerSeconds) * surgePercent
 
-			case ST_MONGODB:
-				total = 10*rand.Float64() + 40
-				generateMongodbMetric(s.FullName(), cs.FullName(), total, 0.01)
+		total += surge
+
+		rps500 := total * float64(rand.Intn(connection.errorRate)) / float64(100)
+		rps200 := (total - rps500) * 0.9
+		rps401 := (total - rps500) * 0.01
+		rps305 := (total - rps500) * 0.09
+
+		sourceService := httpServiceNames[connection.sourceIndex]
+		destinationService := httpServiceNames[connection.destinationIndex]
+
+		var splitRate []float64
+		if len(destinationService.versions) == 1 {
+			splitRate = []float64{float64(100)}
+		} else if len(destinationService.versions) == 2 {
+
+			splitRate = []float64{
+				float64(1) - float64(connection.splitPercent/100),
+				float64(connection.splitPercent),
 			}
+		} else {
+			panic("Either 1 or 2 detination versions are required")
 		}
-	}
 
-	index = 0
-	for _, s := range grpcServices {
-		for _, cs := range s.ConnectedServices {
-			switch cs.Type {
-			case ST_GRPC:
-				total := 10*rand.Float64() + 40
-				generateGrpcMetric(cs.FullName(), s.FullName(), total, 0.01)
+		//there will only ever be 2 destination versions for now, we will split the requests based on that
+		for i, s := range splitRate {
 
-			case ST_REDIS:
-				errRate := 0.0
-				if index == 0 {
-					errRate = 0.0125
-				}
-				index++
+			connection.total200[i] += s * rps200
+			connection.total305[i] += s * rps305
+			connection.total401[i] += s * rps401
+			connection.total500[i] += s * rps500
 
-				total := 10*rand.Float64() + 40
-				generateRedisMetric(s.FullName(), cs.FullName(), total, errRate)
-
-			case ST_MONGODB:
-				total := 10*rand.Float64() + 40
-				generateMongodbMetric(s.FullName(), cs.FullName(), total, 0.01)
-			}
+			httpCounter.WithLabelValues(sourceService.name, sourceService.versions[0], destinationService.name, destinationService.versions[i], cluster, "200").Set(connection.total200[i])
+			httpCounter.WithLabelValues(sourceService.name, sourceService.versions[0], destinationService.name, destinationService.versions[i], cluster, "500").Set(connection.total500[i])
+			httpCounter.WithLabelValues(sourceService.name, sourceService.versions[0], destinationService.name, destinationService.versions[i], cluster, "401").Set(connection.total401[i])
+			httpCounter.WithLabelValues(sourceService.name, sourceService.versions[0], destinationService.name, destinationService.versions[i], cluster, "305").Set(connection.total305[i])
 		}
 	}
 }
 
-type service struct {
-	Name              string
-	Type              string
-	ConnectedServices []*service
-}
+func generateIngressHttpMetric() {
 
-func (s *service) FullName() string {
-	return fmt.Sprintf("%s-%s", s.Type, s.Name)
-}
+	for i := 0; i < len(gateways); i++ {
+		g := &gateways[i]
 
-const (
-	ST_HTTP    = "http"
-	ST_GRPC    = "grpc"
-	ST_REDIS   = "redis"
-	ST_MONGODB = "mongodb"
-)
+		//we need to generate requests for each cluster. we will randomize for each
+		total := float64(g.requestsPerSeconds * int(updateRate))
+		surgePercent := float64(rand.Intn(g.surge)) / float64(100)
+		surge := float64(g.requestsPerSeconds) * surgePercent
 
-var (
-	httpServices    = []*service{}
-	grpcServices    = []*service{}
-	redisServices   = []*service{}
-	mongodbServices = []*service{}
+		total += surge
 
-	httpServiceNames = []string{
-		"sparrow",
-		"hummingbird",
-		"coraciiformes",
-		"ciconfiiformes",
-		"kingfisher",
+		rps500 := total * float64(rand.Intn(g.errorRate)) / float64(100)
+		rps200 := (total - rps500) * 0.9
+		rps401 := (total - rps500) * 0.01
+		rps305 := (total - rps500) * 0.09
+
+		g.total200 = g.total200 + rps200
+		g.total305 += rps305
+		g.total401 += rps401
+		g.total500 += rps500
+
+		httpCounter.WithLabelValues(g.source, "v1", g.destination, "v1", g.cluster, "200").Set(g.total200)
+		httpCounter.WithLabelValues(g.source, "v1", g.destination, "v1", g.cluster, "500").Set(g.total500)
+		httpCounter.WithLabelValues(g.source, "v1", g.destination, "v1", g.cluster, "401").Set(g.total401)
+		httpCounter.WithLabelValues(g.source, "v1", g.destination, "v1", g.cluster, "305").Set(g.total305)
 	}
-	grpcServiceNames = []string{
-		"parrot",
-		"penguin",
-		"toucan",
-		"cuckoos",
-		"woodpecker",
-		"passerine",
-		"albatross",
-		"anatidae",
-		"anatidae",
-		"gregatidae",
-		"flowl",
-		"grouse",
-		"kiwis",
-		"swift",
-		"ightjar",
-		"guineafowl",
-		"turaco",
-		"guineafowl",
-		"neognathae",
-		"spoonbill",
-		"beeeater",
-		"shorebirds",
-	}
-	redisServiceNames = []string{
-		"swallow",
-		"bulbul",
-		"strork",
-		"hornbill",
-	}
-	mongodbServiceNames = []string{
-		"sandpiper",
-		"goose",
-		"plover",
-	}
-)
 
-func generateHttpMetric(service string, total float64, errrate float64) {
-	rps500 := total * errrate
-	rps200 := (total - rps500) * 0.9
-	rps401 := (total - rps500) * 0.01
-	rps305 := (total - rps500) * 0.09
-
-	httpGauge.WithLabelValues(service, "200").Set(rps200)
-	httpGauge.WithLabelValues(service, "500").Set(rps500)
-	httpGauge.WithLabelValues(service, "401").Set(rps401)
-	httpGauge.WithLabelValues(service, "305").Set(rps305)
 }
 
-func generateGrpcMetric(service, client string, total float64, errrate float64) {
-	rpsInternal := total * errrate
-	rpsOK := (total - rpsInternal) * 0.9
-	rpsNotFound := (total - rpsInternal) * 0.09
-	rpsUnauthenticated := (total - rpsInternal) * 0.01
+// func generateClusterMetric() {
+// 	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-1", "200").Set(1000)
+// 	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-1", "500").Set(10)
 
-	grpcGauge.WithLabelValues(service, client, "OK").Set(rpsOK)
-	grpcGauge.WithLabelValues(service, client, "Internal").Set(rpsInternal)
-	grpcGauge.WithLabelValues(service, client, "NotFound").Set(rpsNotFound)
-	grpcGauge.WithLabelValues(service, client, "Unauthenticated").Set(rpsUnauthenticated)
-}
+// 	clusterGauge.WithLabelValues("demo-cluster-1", "demo-cluster-2", "200").Set(100)
+// 	clusterGauge.WithLabelValues("demo-cluster-1", "demo-cluster-2", "500").Set(1)
 
-func generateRedisMetric(service, dbname string, total float64, errrate float64) {
-	rpsFailed := total * errrate
-	rpsSucceeded := total - rpsFailed
+// 	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-2", "200").Set(500)
+// 	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-2", "500").Set(5)
 
-	redisGauge.WithLabelValues(service, dbname, "succeeded").Set(rpsSucceeded)
-	redisGauge.WithLabelValues(service, dbname, "failed").Set(rpsFailed)
-}
-
-func generateMongodbMetric(service, dbname string, total float64, errrate float64) {
-	rpsFailed := total * errrate
-	rpsSucceeded := total - rpsFailed
-
-	mongodbGauge.WithLabelValues(service, dbname, "succeeded").Set(rpsSucceeded)
-	mongodbGauge.WithLabelValues(service, dbname, "failed").Set(rpsFailed)
-}
-
-func generateClusterMetric() {
-	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-1", "200").Set(1000)
-	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-1", "500").Set(10)
-
-	clusterGauge.WithLabelValues("demo-cluster-1", "demo-cluster-2", "200").Set(100)
-	clusterGauge.WithLabelValues("demo-cluster-1", "demo-cluster-2", "500").Set(1)
-
-	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-2", "200").Set(500)
-	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-2", "500").Set(5)
-
-	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-3", "200").Set(100)
-	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-3", "500").Set(5)
-}
+// 	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-3", "200").Set(100)
+// 	clusterGauge.WithLabelValues("INTERNET", "demo-cluster-3", "500").Set(5)
+// }

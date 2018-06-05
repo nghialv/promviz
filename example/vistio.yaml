@@ -1,32 +1,95 @@
-graphName: SimpleDemo
-
+graphName: Istio
 globalLevel:
-  maxVolume: 1200
+  maxVolume: 2000000
   clusterConnections:
-    - name: cluster
-      query: cluster:http_requests_total:rate2m
-      prometheusURL: http://localhost:9090
+    - query: rate(istio_request_count{destination_service="istio-ingressgateway"}[1m])
+      prometheusURL: http://prometheus:9090
       source:
-        label: source
+        replacement: INTERNET
       target:
-        label: target
+        label: cluster
       status:
-        label: status
+        label: response_code
         warningRegex: ^4..$
         dangerRegex: ^5..$
-
 clusterLevel:
-  - cluster: demo-cluster-1
-    maxVolumeRate: 40000
+  - cluster: us-east-1
+    maxVolume: 3000
     serviceConnections:
-      - name: http
-        query: status:http_requests_total:rate2m
-        prometheusURL: http://localhost:9090
+      - query: rate(istio_request_count{cluster="us-east-1"}[1m])
+        prometheusURL: http://prometheus:9090
         source:
-          replacement: INTERNET
+          label: source_service
         target:
-          label: service
+          label: destination_service
         status:
-          label: status
+          label: response_code
           warningRegex: ^4..$
           dangerRegex: ^5..$
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: .01
+              error: .02
+  - cluster: us-west-2
+    maxVolume: 20000
+    serviceConnections:
+      - query: rate(istio_request_count{cluster="us-west-2"}[1m])
+        prometheusURL: http://prometheus:9090
+        source:
+          label: source_service
+        target:
+          label: destination_service
+        status:
+          label: response_code
+          warningRegex: ^4..$
+          dangerRegex: ^5..$
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: .01
+              error: .02
+  - cluster: ap-southeast-1
+    maxVolume: 20000
+    serviceConnections:
+      - query: rate(istio_request_count{cluster="ap-southeast-1"}[1m])
+        prometheusURL: http://prometheus:9090
+        source:
+          label: source_service
+        target:
+          label: destination_service
+        status:
+          label: response_code
+          warningRegex: ^4..$
+          dangerRegex: ^5..$
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: .01
+              error: .02
+  - cluster: eu-west-1
+    maxVolume: 20000
+    serviceConnections:
+      - query: rate(istio_request_count{cluster="eu-west-1"}[1m])
+        prometheusURL: http://prometheus:9090
+        source:
+          label: source_service
+        target:
+          label: destination_service
+        status:
+          label: response_code
+          warningRegex: ^4..$
+          dangerRegex: ^5..$
+        notices:
+          - name: HighErrorRate
+            title: "[{{ .value }}] HighErrorRate"
+            statusType: danger
+            severityThreshold:
+              warning: .01
+              error: .02

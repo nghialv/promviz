@@ -55,3 +55,28 @@ reloader:
 ## Contents of config file of vistio
 vistioConfig:
   graphName: vistio
+
+promvizFront:
+  service:
+    externalPort: 8080
+    internalPort: 8080
+
+  replicaCount: 1
+
+  env:
+    updateURL: ""
+    interval: "1000"
+    maxReplayOffset: "43200"
+
+  image:
+    repository: mjhddevlion/promviz-front
+    tag: v0.1.0
+    pullPolicy: Always
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
