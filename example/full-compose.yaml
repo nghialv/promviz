@@ -18,7 +18,7 @@ services:
     ports:
       - 9091:9091
     volumes:
-      - ./full.yaml:/etc/vistio/vistio.yaml
+      - ./vistio.yaml:/etc/vistio/vistio.yaml
   promviz-front:
     container_name: promviz-front
     image: mjhddevlion/promviz-front:v0.1.0

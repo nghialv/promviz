@@ -14,11 +14,13 @@ import (
 )
 
 var (
-	numberOfMeshConnections               = 100
-	updateRate              time.Duration = 2     //number of seconds between updates
-	maxRequestsPerSecond                  = 2000 // maximum number of requests per second for an application
+	numberOfMeshConnections                = 25
+	updateRate               time.Duration = 2    //number of seconds between updates
+	maxRequestsPerSecond                   = 2000 // maximum number of requests per second for an application
+	ingressRequestsPerSecond               = 2000 //number of requests per second per ingress per cluster
 
 	connections = []meshConnection{}
+	gateways    = []ingressGatewayConnection{}
 
 	clusters = []string{
 		"us-east-1",
@@ -42,7 +44,7 @@ var (
 	)
 
 	httpServiceNames = []service{
-		service{"istio-ingressgateway", []string{"v1"}},
+		service{"istio-ingressgateway", []string{"v5"}},
 		service{"parrot", []string{"v5"}},
 		service{"penguin", []string{"v1", "v2"}},
 		service{"toucan", []string{"v1"}},
@@ -66,6 +68,19 @@ var (
 	}
 )
 
+type ingressGatewayConnection struct {
+	source             string
+	destination        string
+	requestsPerSeconds int // number of requests per second
+	surge              int // max percent of rate that can change +x%
+	errorRate          int //percent of errors
+	cluster            string
+	total500           float64
+	total200           float64
+	total401           float64
+	total305           float64
+}
+
 type meshConnection struct {
 	sourceIndex        int
 	destinationIndex   int
@@ -78,6 +93,7 @@ type meshConnection struct {
 	total401           []float64
 	total305           []float64
 }
+
 type service struct {
 	name     string
 	versions []string
@@ -137,10 +153,11 @@ func initilizeServices() {
 	// generate mesh connections
 	for i := 0; i < numberOfMeshConnections; i++ {
 		sourceIndex, destinationIndex := generateIndices()
-		errRate := rand.Intn(20) // max 20% error rate
+		errRate := 2 // max 10% error rate
 		rps := rand.Intn(maxRequestsPerSecond)
 		splitPercent := rand.Intn(100)
-		surge := rand.Intn(20) // 20% surge in requests
+		surge := 20 // 20% surge in requests
+
 		connection := meshConnection{
 			sourceIndex:        sourceIndex,
 			destinationIndex:   destinationIndex,
@@ -154,6 +171,23 @@ func initilizeServices() {
 			total305:           []float64{0.0, 0.0},
 		}
 		connections = append(connections, connection)
+	}
+
+	//ingress gateway per cluster
+	for _, c := range clusters {
+		gateway := ingressGatewayConnection{
+			source:             "INTERNET",
+			cluster:            c,
+			destination:        "istio-ingressgateway",
+			requestsPerSeconds: ingressRequestsPerSecond,
+			surge:              20,
+			errorRate:          1,
+			total500:           0.0,
+			total200:           0.0,
+			total401:           0.0,
+			total305:           0.0,
+		}
+		gateways = append(gateways, gateway)
 	}
 }
 
@@ -180,25 +214,27 @@ func connectionAlreadyMade(sourceIndex int, destinationIndex int) bool {
 func updateData() {
 	fmt.Println("update metrics")
 
-	for _, c := range connections {
-		generateHttpMetric(&c)
+	for i := 0; i < len(connections); i++ {
+		generateHttpMetric(&connections[i])
 
 	}
 	//TODO generate istio-ingressgateway metrics everytime
+	generateIngressHttpMetric()
 }
 
 func generateHttpMetric(connection *meshConnection) {
 
-	for _, cluster := range clusters {
-
+	for i := 0; i < len(clusters); i++ {
+		cluster := clusters[i]
 		//we need to generate requests for each cluster. we will randomize for each
 		total := float64(connection.requestsPerSeconds * int(updateRate))
-		surgePercent := float64(connection.surge) / float64(100)
+		// fmt.Println(connection.surge)
+		surgePercent := float64(rand.Intn(connection.surge)) / float64(100)
 		surge := float64(connection.requestsPerSeconds) * surgePercent
 
 		total += surge
 
-		rps500 := total * float64(connection.errorRate) / float64(100)
+		rps500 := total * float64(rand.Intn(connection.errorRate)) / float64(100)
 		rps200 := (total - rps500) * 0.9
 		rps401 := (total - rps500) * 0.01
 		rps305 := (total - rps500) * 0.09
@@ -233,6 +269,36 @@ func generateHttpMetric(connection *meshConnection) {
 			httpCounter.WithLabelValues(sourceService.name, sourceService.versions[0], destinationService.name, destinationService.versions[i], cluster, "305").Set(connection.total305[i])
 		}
 	}
+}
+
+func generateIngressHttpMetric() {
+
+	for i := 0; i < len(gateways); i++ {
+		g := &gateways[i]
+
+		//we need to generate requests for each cluster. we will randomize for each
+		total := float64(g.requestsPerSeconds * int(updateRate))
+		surgePercent := float64(rand.Intn(g.surge)) / float64(100)
+		surge := float64(g.requestsPerSeconds) * surgePercent
+
+		total += surge
+
+		rps500 := total * float64(rand.Intn(g.errorRate)) / float64(100)
+		rps200 := (total - rps500) * 0.9
+		rps401 := (total - rps500) * 0.01
+		rps305 := (total - rps500) * 0.09
+
+		g.total200 = g.total200 + rps200
+		g.total305 += rps305
+		g.total401 += rps401
+		g.total500 += rps500
+
+		httpCounter.WithLabelValues(g.source, "v1", g.destination, "v1", g.cluster, "200").Set(g.total200)
+		httpCounter.WithLabelValues(g.source, "v1", g.destination, "v1", g.cluster, "500").Set(g.total500)
+		httpCounter.WithLabelValues(g.source, "v1", g.destination, "v1", g.cluster, "401").Set(g.total401)
+		httpCounter.WithLabelValues(g.source, "v1", g.destination, "v1", g.cluster, "305").Set(g.total305)
+	}
+
 }
 
 // func generateClusterMetric() {
