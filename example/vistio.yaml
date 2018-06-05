@@ -31,8 +31,8 @@ clusterLevel:
             title: "[{{ .value }}] HighErrorRate"
             statusType: danger
             severityThreshold:
-              warning: 10
-              error: 20
+              warning: .01
+              error: .02
   - cluster: us-west-2
     maxVolume: 20000
     serviceConnections:
@@ -51,8 +51,8 @@ clusterLevel:
             title: "[{{ .value }}] HighErrorRate"
             statusType: danger
             severityThreshold:
-              warning: 10
-              error: 20
+              warning: .01
+              error: .02
   - cluster: ap-southeast-1
     maxVolume: 20000
     serviceConnections:
@@ -71,8 +71,8 @@ clusterLevel:
             title: "[{{ .value }}] HighErrorRate"
             statusType: danger
             severityThreshold:
-              warning: 10
-              error: 20
+              warning: .01
+              error: .02
   - cluster: eu-west-1
     maxVolume: 20000
     serviceConnections:
@@ -91,5 +91,5 @@ clusterLevel:
             title: "[{{ .value }}] HighErrorRate"
             statusType: danger
             severityThreshold:
-              warning: 10
-              error: 20
+              warning: .01
+              error: .02

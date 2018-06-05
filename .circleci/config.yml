@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  build-api:
     docker:
       - image: circleci/golang:1.10.2
         environment:
