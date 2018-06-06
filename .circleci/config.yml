@@ -9,6 +9,7 @@ jobs:
     working_directory: /go/src/github.com/nmnellis/vistio/api
     steps:
       - checkout
+      - run: ls
       - run: make test
       - run: make build
       - setup_remote_docker:
