@@ -31,7 +31,7 @@ jobs:
         environment:
           DOCKER_IMAGE_NAME: nmnellis/vistio-web
 
-    working_directory: /go/src/github.com/nmnellis/vistio
+    working_directory: ~/vistio
     steps:
       - checkout
       - run: cd web && npm install
