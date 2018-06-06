@@ -8,8 +8,8 @@ import (
 	"html/template"
 	"time"
 
-	"github.com/nmnellis/vistio/config"
-	"github.com/nmnellis/vistio/model"
+	"github.com/nmnellis/vistio/api/config"
+	"github.com/nmnellis/vistio/api/model"
 	prommodel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"

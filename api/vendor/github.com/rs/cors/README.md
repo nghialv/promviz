@@ -57,6 +57,9 @@ The server now runs on `localhost:8080`:
 * [Negroni](https://github.com/codegangsta/negroni): [examples/negroni/server.go](https://github.com/rs/cors/blob/master/examples/negroni/server.go)
 * [Alice](https://github.com/justinas/alice): [examples/alice/server.go](https://github.com/rs/cors/blob/master/examples/alice/server.go)
 * [HttpRouter](https://github.com/julienschmidt/httprouter): [examples/httprouter/server.go](https://github.com/rs/cors/blob/master/examples/httprouter/server.go)
+* [Gorilla](http://www.gorillatoolkit.org/pkg/mux): [examples/gorilla/server.go](https://github.com/rs/cors/blob/master/examples/gorilla/server.go)
+* [Buffalo](https://gobuffalo.io): [examples/buffalo/server.go](https://github.com/rs/cors/blob/master/examples/buffalo/server.go)
+* [Gin](https://gin-gonic.github.io/gin): [examples/gin/server.go](https://github.com/rs/cors/blob/master/examples/gin/server.go)
 
 ## Parameters
 
@@ -64,8 +67,10 @@ Parameters are passed to the middleware thru the `cors.New` method as follow:
 
 ```go
 c := cors.New(cors.Options{
-    AllowedOrigins: []string{"http://foo.com"},
+    AllowedOrigins: []string{"http://foo.com", "http://foo.com:8080"},
     AllowCredentials: true,
+    // Enable Debugging for testing, consider disabling in production
+    Debug: true,
 })
 
 // Insert the middleware

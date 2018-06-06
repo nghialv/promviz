@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/nmnellis/vistio/model"
+	"github.com/nmnellis/vistio/api/model"
 )
 
 const ChunkLength = 5 * time.Minute

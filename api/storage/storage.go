@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nmnellis/vistio/model"
+	"github.com/nmnellis/vistio/api/model"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )

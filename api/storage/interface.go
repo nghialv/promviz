@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/nmnellis/vistio/model"
+	"github.com/nmnellis/vistio/api/model"
 )
 
 type Storage interface {

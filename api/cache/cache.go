@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/nmnellis/vistio/storage"
+	"github.com/nmnellis/vistio/api/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )

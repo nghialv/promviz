@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/nmnellis/vistio/cache"
-	"github.com/nmnellis/vistio/model"
-	"github.com/nmnellis/vistio/storage"
+	"github.com/nmnellis/vistio/api/cache"
+	"github.com/nmnellis/vistio/api/model"
+	"github.com/nmnellis/vistio/api/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"

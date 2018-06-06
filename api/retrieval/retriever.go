@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nmnellis/vistio/config"
-	"github.com/nmnellis/vistio/storage"
+	"github.com/nmnellis/vistio/api/config"
+	"github.com/nmnellis/vistio/api/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
