@@ -1,0 +1,82 @@
+## By default, fullname will be the string that is associated with .Release.Name and .Chart.Name.
+## But you can override the fullname by specifying this field.
+fullnameOverride: {}
+
+## Labeling the environment for pod, deployment, service
+environment: {}
+
+service:
+  externalPort: 9091
+  internalPort: 9091
+
+replicaCount: 1
+
+storage:
+  class: standard
+  size: 5Gi
+
+## Configurations for vistio container
+vistio:
+  image:
+    repository: nmnellis/vistio
+    tag: v0.1.0
+    pullPolicy: Always
+  log:
+    level: info
+  storage:
+    retention: 24h
+  cache:
+    size: 100
+  retrieval:
+      scrapeInterval: 10s
+      scrapeTimeout: 8s
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+## Configurations for reloader container
+reloader:
+  image:
+    repository: nghialv2607/k8s-config-reloader
+    tag: v0.1.0
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 20m
+      memory: 32Mi
+
+## Contents of config file of vistio
+vistioConfig:
+  graphName: vistio
+
+promvizFront:
+  service:
+    externalPort: 8080
+    internalPort: 8080
+
+  replicaCount: 1
+
+  env:
+    updateURL: ""
+    interval: "1000"
+    maxReplayOffset: "43200"
+
+  image:
+    repository: mjhddevlion/promviz-front
+    tag: v0.1.0
+    pullPolicy: Always
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi

@@ -1,0 +1,38 @@
+.server-status {
+  margin-left: 20px;
+}
+
+.server-status > .indicator {
+  display: inline-block;
+
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+
+  background: rgb(150, 150, 150);
+}
+
+.indicator.disconnected {
+  background-color: var(--colorDanger);
+  transition: all 1s 0s ease;
+}
+
+.indicator.connected {
+  background-color: var(--colorNormal);
+  transition: all 1s 0s ease;
+  animation-duration: 1s;
+  animation-name: beat;
+  animation-iteration-count: infinite;
+}
+
+@keyframes beat {
+  0% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(175, 233, 102, .4);
+  }
+  100% {
+    box-shadow: none;
+  }
+}

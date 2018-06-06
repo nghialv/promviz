@@ -1,0 +1,27 @@
+.options-panel {
+  display: inline-block;
+  padding-left: 15px;
+  position: relative;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.options-panel-title {
+  line-height: 24px;
+}
+
+.options-panel-content {
+  padding: 10px;
+  display: block;
+  position: absolute;
+  background-color: var(--colorPageBackground);
+  z-index: 9999;
+  width: 350px;
+}
+
+.options-link {
+  color: var(--colorNormalDimmed);
+  text-decoration: none;
+}

@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    heritage: {{ .Release.Service }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ template "name" . }}
+    release: {{ .Release.Name }}
+  {{- if .Values.environment }}
+    environment: {{ .Values.environment }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+        release: {{ .Release.Name }}
+      {{- if .Values.environment }}
+        environment: {{ .Values.environment }}
+      {{- end }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.promvizFront.image.repository }}:{{ .Values.promvizFront.image.tag }}"
+          imagePullPolicy: {{ .Values.promvizFront.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.promvizFront.service.internalPort }}
+          env:
+            - name: UPDATE_URL
+              value: {{ .Values.promvizFront.env.updateURL }}
+            - name: INTERVAL
+              value: {{ .Values.promvizFront.env.interval | quote }}
+            - name: MAX_REPLAY_OFFSET
+              value: {{ .Values.promvizFront.env.maxReplayOffset | quote }}
+          resources:
+{{ toYaml .Values.promvizFront.resources | indent 12 }}

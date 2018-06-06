@@ -1,0 +1,41 @@
+.vizceral-control {
+  padding: 5px 10px 5px 10px;
+  border-bottom: 1px solid var(--colorBorderLines);
+  width: 100%;
+}
+
+.vizceral-control span {
+  padding-right: 5px;
+}
+
+.vizceral-controls-panel div, .vizceral-controls-panel input[type=range] {
+  display: block;
+}
+
+.vizceral-controls-panel input[type=checkbox] {
+  padding: 0 3px 0 3px;
+}
+
+.vizceral-controls-panel input[type=radio] {
+  margin-right: 5px;
+}
+
+.vizceral-controls-panel .radio-control:not(:first-child) {
+  margin-left: 5px;
+}
+
+
+.vizceral-control-group-title {
+  display: inline-block;
+  background-color: var(--colorPageBackground);
+  margin-left: 10px;
+  font-weight: 600;
+}
+
+.vizceral-control-group {
+  border: 2px solid var(--colorBorderLines);
+  margin-top: -0.7em;
+  margin-bottom: 5px;
+  padding-top: 0.3em;
+  padding-left: 10px;
+}
