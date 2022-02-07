@@ -9,6 +9,7 @@ jobs:
     working_directory: /go/src/github.com/nghialv/promviz
     steps:
       - checkout
+      - run: make dep
       - run: make test
       - run: make build
       - setup_remote_docker:

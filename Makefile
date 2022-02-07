@@ -18,3 +18,7 @@ build:
 PHONY: test
 test:
 	$(GO_ENV) go  test $(GO_PKGS)
+
+.PHONY: dep
+dep:
+	go mod tidy
