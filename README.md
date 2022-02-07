@@ -1,4 +1,4 @@
-# Promviz [![CircleCI Build Status](https://circleci.com/gh/nghialv/promviz.svg?style=shield)](https://circleci.com/gh/nghialv/promviz) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com) [![MIT Licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/nghialv/promviz/blob/master/LICENSE)
+# Promviz [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com) [![MIT Licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/nghialv/promviz/blob/master/LICENSE)
 
 
 Promviz is an application that helps you visualize the traffic of your cluster from Prometheus data.
@@ -37,7 +37,7 @@ helm install --name promviz-front ./helm/promviz-front
 
 Docker images of both `promviz` and `promviz-front` are available on Docker Hub.
 
-- [nghialv2607/promviz](https://hub.docker.com/r/nghialv2607/promviz)
+- [ghcr.io/nghialv/promviz](https://github.com/nghialv/promviz/pkgs/container/promviz)
 - [mjhddevlion/promviz-front](https://hub.docker.com/r/mjhddevlion/promviz-front)
 
 ## Example
