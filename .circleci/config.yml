@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: cimg/go:1.17
+      - image: circleci/golang:1.17
         environment:
           DOCKER_IMAGE_NAME: nghialv2607/promviz
 
