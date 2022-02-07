@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/nghialv/promviz/config"
-	"github.com/prometheus/client_golang/api/prometheus"
+	"github.com/prometheus/client_golang/api"
+	prometheus "github.com/prometheus/client_golang/api/prometheus/v1"
 	prommodel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 )
@@ -19,8 +20,8 @@ type querier interface {
 
 type promClient struct {
 	addr     string
-	client   prometheus.Client
-	queryAPI prometheus.QueryAPI
+	client   api.Client
+	queryAPI prometheus.API
 }
 
 type prompool struct {
@@ -48,11 +49,11 @@ func newQuerier(logger *zap.Logger, cfg *config.Config) (*prompool, error) {
 	}
 
 	for addr := range addrs {
-		c, err := prometheus.New(prometheus.Config{Address: addr})
+		c, err := api.NewClient(api.Config{Address: addr})
 		if err != nil {
 			return nil, err
 		}
-		a := prometheus.NewQueryAPI(c)
+		a := prometheus.NewAPI(c)
 		pq.clients[addr] = &promClient{
 			addr:     addr,
 			client:   c,
@@ -70,7 +71,8 @@ func (pp *prompool) Query(ctx context.Context, addr string, query string, ts tim
 	if client == nil {
 		return nil, fmt.Errorf("Could not send a query to unknown prometheus addr (addr=%s)", addr)
 	}
-	return client.queryAPI.Query(ctx, query, ts)
+	value, _, err := client.queryAPI.Query(ctx, query, ts)
+	return value, err
 }
 
 func (pp *prompool) Stop() error {
